@@ -323,7 +323,7 @@ kbd{font-family:var(--font-b);font-weight:800;font-size:.78em;padding:.05em .45e
         <svg id="map" viewBox="0 0 800 540" role="img" aria-label="Top-down map of Maxwell Food Centre with two stalls"></svg>
         <button id="talkBtn" class="talk-btn" hidden></button>
       </div>
-      <p class="map-help">Click the floor, or use <kbd>WASD</kbd> / arrow keys, to walk. Step onto an <b>Order here</b> mat and press <kbd>Space</kbd> to talk to the hawker.</p>
+      <p class="map-help">Click the floor, or use <kbd>WASD</kbd> / arrow keys, to walk. Step onto an <b>Order here</b> mat and press <kbd>Enter</kbd> to talk to the hawker.</p>
     </div>
     <aside class="side">
       <div class="card side-card">
@@ -482,7 +482,7 @@ const LEVELS = [
     none: {},
     chips: ['Mee Pok', 'Mee Kia', 'Hor Fun', 'Bee Hoon', 'Dry', 'Soup', 'Chili', 'No Chili', 'Peng'],
     intro: [
-      'Wah, you passed Uncle Lim’s kopi test? Not bad! Fishball noodle is even simpler.',
+      'Come, Auntie teach you how to order fishball noodles!',
       'Tell Auntie three things, in order: which noodle, dry or soup, then chili or no chili. Dry one comes with soup on the side, don’t worry.'
     ],
     formula: [
@@ -527,7 +527,7 @@ const SAVE_KEY = 'hawker-lingo-v1';
 let save = (() => { try { const r = localStorage.getItem(SAVE_KEY); if (r) { const s = JSON.parse(r); if (s && s.levels) return s; } } catch (e) {} return { levels: {}, sound: true }; })();
 const persist = () => { try { localStorage.setItem(SAVE_KEY, JSON.stringify(save)); } catch (e) {} };
 const levelSave = id => save.levels[id] || { done: false, stars: 0, best: 0 };
-const unlocked = i => i === 0 || levelSave(LEVELS[i - 1].id).done;
+const unlocked = i => true;
 
 let actx = null;
 function beep(freqs, dur = .09, type = 'triangle', gap = .07, vol = .07) {
@@ -808,12 +808,7 @@ function tableMarkup(t, i) {
     m += `<circle cx="${sx.toFixed(1)}" cy="${sy.toFixed(1)}" r="13" fill="${cols[k]}" stroke="#1e2a24" stroke-width="2.5"/><circle cx="${sx.toFixed(1)}" cy="${sy.toFixed(1)}" r="4.5" fill="rgba(0,0,0,.28)"/>`;
   });
   m += `<circle cx="${t.x}" cy="${t.y + 3}" r="36" fill="rgba(0,0,0,.12)"/><circle cx="${t.x}" cy="${t.y}" r="36" fill="#f6f4ee" stroke="#1e2a24" stroke-width="2.5"/><circle cx="${t.x}" cy="${t.y}" r="29" fill="none" stroke="#d8d2c4" stroke-width="2"/>`;
-  const cup = (x, y, c) => `<circle cx="${x}" cy="${y}" r="8" fill="#fbf7ee" stroke="#1e2a24" stroke-width="1.5"/><circle cx="${x}" cy="${y}" r="5" fill="${c}"/>`;
-  if (i === 0) m += cup(t.x - 12, t.y - 6, '#a47248') + cup(t.x + 12, t.y + 8, '#3a2214');
-  if (i === 1) m += `<circle cx="${t.x}" cy="${t.y}" r="12" fill="#fbf7ee" stroke="#1e2a24" stroke-width="1.5"/><circle cx="${t.x}" cy="${t.y}" r="9" fill="#f2d38f"/><circle cx="${t.x - 3}" cy="${t.y - 2}" r="2.6" fill="#fff"/><circle cx="${t.x + 3}" cy="${t.y + 3}" r="2.6" fill="#fff"/>`;
-  if (i === 2) m += `<g class="chope" tabindex="0" role="button" aria-label="Tissue packet on the table"><title>A tissue packet: this seat is choped!</title><g transform="rotate(-14 ${t.x} ${t.y})"><rect x="${t.x - 13}" y="${t.y - 8}" width="26" height="16" rx="3" fill="#fff" stroke="#1e2a24" stroke-width="1.8"/><path d="M${t.x - 9} ${t.y - 3} h18 M${t.x - 9} ${t.y + 2} h18" stroke="#2e86de" stroke-width="2"/></g></g>`;
-  if (i === 3) m += `<ellipse cx="${t.x}" cy="${t.y}" rx="16" ry="12" fill="#fbf7ee" stroke="#1e2a24" stroke-width="1.5"/><path d="M${t.x - 10} ${t.y - 3} q5 -4 10 0 t10 0 M${t.x - 10} ${t.y + 3} q5 -4 10 0 t10 0" stroke="#efbd42" stroke-width="3" fill="none"/>`;
-  if (i === 4) m += `<circle cx="${t.x + 8}" cy="${t.y - 6}" r="8" fill="#bfe3ff" stroke="#1e2a24" stroke-width="1.5"/><circle cx="${t.x + 10}" cy="${t.y - 8}" r="2" fill="#e04b3a"/>` + cup(t.x - 12, t.y + 8, '#d29a66');
+  if (i === 0 || i === 2 || i === 4) m += `<g class="chope" tabindex="0" role="button" aria-label="Tissue packet on the table"><title>A tissue packet: this seat is choped!</title><g transform="rotate(-14 ${t.x} ${t.y})"><rect x="${t.x - 13}" y="${t.y - 8}" width="26" height="16" rx="3" fill="#fff" stroke="#1e2a24" stroke-width="1.8"/><path d="M${t.x - 9} ${t.y - 3} h18 M${t.x - 9} ${t.y + 2} h18" stroke="#2e86de" stroke-width="2"/></g></g>`;
   return m;
 }
 
@@ -886,7 +881,7 @@ function checkZone() {
   if (z < 0) { b.hidden = true; return; }
   const lv = LEVELS[z];
   b.hidden = false;
-  if (unlocked(z)) { b.classList.remove('locked'); b.innerHTML = `💬 Talk to ${lv.npc} <kbd>Space</kbd>`; }
+  if (unlocked(z)) { b.classList.remove('locked'); b.innerHTML = `💬 Talk to ${lv.npc} <kbd>Enter</kbd>`; }
   else { b.classList.add('locked'); b.textContent = `🔒 ${lv.npc} is busy. Learn kopi first!`; }
 }
 function tick(now) {
@@ -927,7 +922,7 @@ $('#map').addEventListener('click', e => {
   const p = svgPoint(e); setTarget(p.x, p.y);
 });
 $('#map').addEventListener('keydown', e => {
-  if (e.key !== 'Enter' && e.key !== ' ') return;
+  if (e.key !== 'Enter') return;
   const st = e.target.closest('.stall'); if (st) { e.preventDefault(); e.stopPropagation(); goToStall(+st.dataset.stall); }
   if (e.target.closest('.chope')) { e.preventDefault(); e.stopPropagation(); toast('🧻 Chope! A tissue packet on a table means someone has reserved that seat.'); }
 });
@@ -942,7 +937,7 @@ addEventListener('keydown', e => {
   if ($('#hub').classList.contains('active')) {
     if (KEYMAP[e.key]) { keys.add(KEYMAP[e.key]); e.preventDefault(); return; }
     const onCtl = e.target.closest && e.target.closest('button, .stall, .chope');
-    if ((e.key === ' ' || e.key === 'Enter') && !onCtl && inZone >= 0) { e.preventDefault(); if (unlocked(inZone)) openLesson(inZone); else toast('🔒 Finish Uncle Lim’s kopi lesson first!'); }
+    if (e.key === 'Enter' && !onCtl && inZone >= 0) { e.preventDefault(); if (unlocked(inZone)) openLesson(inZone); else toast('🔒 Finish Uncle Lim’s kopi lesson first!'); }
   } else if ($('#lesson').classList.contains('active') && L) {
     const onBtn = e.target.closest && e.target.closest('button');
     if (e.key === 'Enter' && !onBtn) { e.preventDefault(); submit(); }
@@ -1196,7 +1191,7 @@ function nextPrompt() {
 function finishLevel() {
   const lv = L.lv, n = lv.prompts.length, p = L.perfect;
   const stars = p === n ? 3 : p >= n - 2 ? 2 : 1;
-  const prev = levelSave(lv.id), wasDone = prev.done;
+  const prev = levelSave(lv.id);
   save.levels[lv.id] = { done: true, stars: Math.max(prev.stars, stars), best: Math.max(prev.best, L.score) };
   persist();
   const nextLv = LEVELS[L.li + 1];
@@ -1208,7 +1203,6 @@ function finishLevel() {
     <div class="bigstars" aria-label="${stars} of 3 stars">${starsHTML(stars)}</div>
     <p style="font-weight:800;margin:.2em 0">${p}/${n} perfect first-try orders · ${L.score} pts</p>
     <p class="npc-say"><b>${lv.npc}:</b> “${stars === 3 ? 'Wah, confirm local! Next time kopi on the house.' : stars === 2 ? 'Not bad at all! Practise a bit more, can be perfect.' : 'Steady progress. Come back tomorrow, try again!'}”</p>
-    ${!wasDone && nextLv ? `<div class="unlock">🔓 New stall unlocked: ${nextLv.npc}’s ${nextLv.type.toLowerCase()} at ${nextLv.stall}!</div>` : ''}
     ${allDone && !nextLv ? `<div class="unlock">🏅 You’ve cleared both stalls. You’re officially a Maxwell regular!</div>` : ''}
     <div class="row-btns"><button class="btn ghost" data-act="replay">Replay lesson</button><button class="btn primary" data-act="hub" data-primary>Back to Maxwell</button></div></div>`,
     { hub: backToHub, close: backToHub, replay: () => { closeModal(); openLesson(L.li); } });
