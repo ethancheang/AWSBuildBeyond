@@ -296,7 +296,7 @@ kbd{font-family:var(--font-b);font-weight:800;font-size:.78em;padding:.05em .45e
     <div class="bunting" id="bunting" aria-hidden="true"></div>
     <div class="hero-art" id="heroArt" aria-hidden="true"></div>
     <h1>Hawker Lingo Simulator<small>Maxwell Food Centre</small></h1>
-    <p class="lede">Walk the hawker centre, meet the uncle and auntie behind the counter, and learn to order kopi and fishball noodles like a local.</p>
+    <p class="lede">Walk the hawker centre, meet the uncle and auntie behind the counter, and learn to order kopi, fishball noodles and nasi lemak like a local.</p>
     <div class="how">
       <div><b>🚶</b>Walk up to a stall and talk to the hawker</div>
       <div><b>🗣️</b>Read what the customer is craving</div>
@@ -311,7 +311,7 @@ kbd{font-family:var(--font-b);font-weight:800;font-size:.78em;padding:.05em .45e
   <header class="topbar">
     <div class="brand"><span class="brand-badge" aria-hidden="true">☕</span><div><b>Hawker Lingo</b><small>Maxwell Food Centre</small></div></div>
     <div class="top-actions">
-      <span class="pill" id="hubStars">★ 0/6</span>
+      <span class="pill" id="hubStars">★ 0/9</span>
       <span class="pill" id="hubPts">0 pts</span>
       <button class="icon-btn" id="glossBtn">📖 <span class="hide-sm">Lingo guide</span></button>
       <button class="icon-btn" id="soundBtn" aria-label="Toggle sound">🔊</button>
@@ -320,7 +320,7 @@ kbd{font-family:var(--font-b);font-weight:800;font-size:.78em;padding:.05em .45e
   <div class="hub-body">
     <div class="map-col">
       <div class="map-wrap">
-        <svg id="map" viewBox="0 0 800 540" role="img" aria-label="Top-down map of Maxwell Food Centre with two stalls"></svg>
+        <svg id="map" viewBox="0 0 800 540" role="img" aria-label="Top-down map of Maxwell Food Centre with three stalls"></svg>
         <button id="talkBtn" class="talk-btn" hidden></button>
       </div>
       <p class="map-help">Click the floor, or use <kbd>WASD</kbd> / arrow keys, to walk. Step onto an <b>Order here</b> mat and press <kbd>Enter</kbd> to talk to the hawker.</p>
@@ -511,6 +511,96 @@ const LEVELS = [
     ]
   }
 ];
+
+// Nasi lemak: short exchanges, with scoring once per customer.
+Object.assign(CATS, {
+  meal: {label:'Meal',color:'#23856b'}, chicken:{label:'Chicken',color:'#b86924'},
+  egg:{label:'Extra egg',color:'#bc8a14'}, sambal:{label:'Sambal',color:'#d74d38'},
+  dining:{label:'Eat here / takeaway',color:'#367aac'}, polite:{label:'Conversation',color:'#9766ac'}
+});
+const MALAY_TERMS = [
+ ['Kak','polite','Older sister; familiar address','Short for kakak. A friendly form of address for this NPC, not a required part of an order.'],
+ ['Saya nak','polite','I would like','A conversational way to begin a request.'],
+ ['Nasi lemak satu','meal','One nasi lemak','Satu means one. Order one portion of this stall’s basic set.'],
+ ['Satu nasi lemak','meal','One nasi lemak','An alternative way to order one portion.'],
+ ['Ayam goreng','chicken','Fried chicken','Add fried chicken to the basic set.'],
+ ['Tambah telur satu','egg','Add one egg','Tambah means add; telur means egg; satu means one. This is an extra egg.'],
+ ['Tak nak telur tambahan','egg','No extra egg','Decline an additional egg. The basic set still includes its half boiled egg.'],
+ ['Sambal sikit','sambal','A little sambal','A smaller amount of sambal, not a less spicy recipe.'],
+ ['Tak nak sambal','sambal','No sambal','Tak nak means do not want. Leave sambal off this serving.'],
+ ['Sambal asing','sambal','Sambal separately','Asing means separate. Serve the sambal in a separate little container.'],
+ ['Sambal biasa','sambal','Regular sambal portion','Biasa means usual or normal.'],
+ ['Makan sini','dining','Eat here','Conversational wording for eating here at the hawker centre.'],
+ ['Bungkus','dining','Takeaway','Ask for the meal to be packed to take away.'],
+ ['Terima kasih','polite','Thank you','Say this when your food is handed over. It does not affect your food-order score.']
+];
+MALAY_TERMS.forEach(([t,cat,short,long])=>GLOSS[t]={cat,short,long});
+const NASI_BASE = 'This stall’s basic set: coconut rice, half a boiled egg, cucumber, peanuts and ikan bilis (anchovies). Sambal is chosen separately. Other stalls may serve different sets.';
+const nasiOrder = chicken => ({q:'Nak makan apa? — What would you like?', a:['Nasi lemak satu',...(chicken?['Ayam goreng']:[])], chips:['Kak','Saya nak','Nasi lemak satu','Satu nasi lemak','Ayam goreng']});
+const nasiEgg = {q:'Nak tambah telur? — Want to add an egg?',a:['Tambah telur satu'],chips:['Tambah telur satu','Tak nak telur tambahan']};
+const nasiSambal = term => ({q:'Sambal macam mana? — How would you like the sambal?',a:[term],chips:['Sambal biasa','Sambal sikit','Tak nak sambal','Sambal asing']});
+const nasiDining = term => ({q:'Makan sini atau bungkus? — Eating here or takeaway?',a:[term],chips:['Makan sini','Bungkus']});
+const nasiScenarios = [
+ ['A first visit','One basic nasi lemak, regular sambal, no extra egg. Eat here.',false,false,'Sambal biasa','Makan sini'],
+ ['Lunch break','One nasi lemak with fried chicken, regular sambal, no extra egg. Eat here.',true,false,'Sambal biasa','Makan sini'],
+ ['An extra egg','One basic nasi lemak with one extra egg, regular sambal. Eat here.',false,true,'Sambal biasa','Makan sini'],
+ ['Just a little','One basic nasi lemak with a little sambal, no extra egg. Eat here.',false,false,'Sambal sikit','Makan sini'],
+ ['Taking lunch home','One basic nasi lemak, no sambal and no extra egg. Takeaway.',false,false,'Tak nak sambal','Bungkus'],
+ ['The full order','One nasi lemak with fried chicken and one extra egg. Pack the sambal separately. Takeaway.',true,true,'Sambal asing','Bungkus']
+];
+LEVELS.push({id:'nasi',kind:'nasi',stall:'Dapur Aisyah',stallZh:'NASI LEMAK',type:'Nasi lemak',npc:'Kak Aisyah',role:'nasi lemak hawker',honor:'Kak',title:'A nasi lemak conversation',
+ npcAv:{skin:'#bd895f',hair:'#33261e',style:'long',shirt:'#d9a53b',apron:'#23856b'},
+ slots:['meal','chicken','egg','sambal','dining'],optional:['chicken','egg'],none:{},chips:MALAY_TERMS.map(x=>x[0]),
+ intro:['Welcome! We’ll build your meal one question at a time.',NASI_BASE,'You can call me Kak Aisyah. Kak means older sister and can be a friendly address; it is optional. Hover or hold a chip for help.'],
+ formula:[{cat:'meal',opts:['Nasi lemak satu']},{cat:'sambal',opts:['Sambal sikit']},{cat:'dining',opts:['Bungkus']}],
+ example:{tokens:['Nasi lemak satu','Sambal sikit','Bungkus'],meaning:'one nasi lemak, a little sambal, to take away'},next:['Welcome! What would you like?'],praise:['Your meal is ready. Enjoy!'],comfort:['No worries. Let’s try that part again.'],
+ prompts:nasiScenarios.map(([name,q,chicken,egg,sambal,dining])=>({c:{name,tag:'nasi lemak customer',av:{skin:'#e8b994',style:'short',shirt:'#69a8b2'}},q,
+  stages:[nasiOrder(chicken),...(egg?[nasiEgg]:[]),nasiSambal(sambal),nasiDining(dining)],
+  a:['Nasi lemak satu',...(chicken?['Ayam goreng']:[]),...(egg?['Tambah telur satu']:[]),sambal,dining]}))
+});
+
+function nasiSVG(tokens) {
+ const has=t=>tokens.includes(t), packed=has('Bungkus'), sep=has('Sambal asing');
+ const egg=(x,y)=>`<ellipse cx="${x}" cy="${y}" rx="15" ry="11" fill="#fff8df" stroke="#806b41"/><circle cx="${x}" cy="${y}" r="6" fill="#ffca36"/>`;
+ return `<svg viewBox="0 0 220 170" aria-hidden="true">
+ ${packed?'<rect x="12" y="25" width="180" height="127" rx="10" fill="#c69b65" stroke="#322c22" stroke-width="3"/>':'<ellipse cx="104" cy="91" rx="98" ry="65" fill="#fff5dd" stroke="#322c22" stroke-width="3"/>'}
+ <path d="M26 55Q105 33 180 58L170 127Q99 149 27 121Z" fill="#3f8850"/>
+ <path d="M53 106Q49 57 95 53Q133 58 135 107Z" fill="#fff8e2" stroke="#d8d0ad" stroke-width="2"/>
+ ${egg(49,115)}${has('Tambah telur satu')?egg(92,128):''}
+ <g fill="#a1c962" stroke="#37754b" stroke-width="2"><circle cx="151" cy="114" r="12"/><circle cx="164" cy="105" r="12"/></g>
+ <g fill="#a87332"><ellipse cx="37" cy="77" rx="5" ry="3"/><ellipse cx="39" cy="88" rx="5" ry="3"/><ellipse cx="29" cy="84" rx="5" ry="3"/></g>
+ <path d="M35 99l13 -4m-16 8l14 -3" stroke="#815228" stroke-width="3"/>
+ ${has('Ayam goreng')?'<path d="M112 72Q113 41 143 47Q166 53 147 79L131 88Z" fill="#b7692a" stroke="#6e3e20" stroke-width="3"/>':''}
+ ${sep?'<rect x="178" y="117" width="35" height="29" rx="7" fill="#fff4d4" stroke="#322c22"/><ellipse cx="195" cy="131" rx="13" ry="9" fill="#b83123"/>':has('Tak nak sambal')?'':has('Sambal sikit')?'<ellipse cx="160" cy="80" rx="7" ry="5" fill="#b83123"/>':has('Sambal biasa')?'<ellipse cx="160" cy="80" rx="17" ry="11" fill="#b83123"/>':''}
+ </svg>`;
+}
+function nasiStage(){return L.lv.prompts[L.idx].stages[L.stage];}
+function nasiTurn(){
+ L.tokens=[]; const st=nasiStage();
+ setBubble(st.q); $('#chips').innerHTML='';st.chips.forEach(t=>$('#chips').appendChild(makeChip(t)));
+ $('.chips-label').textContent='Answer this question. Hover or long-press for the English meaning. Optional greetings do not affect your score.';
+ $('#orderBtn').textContent='Reply to Kak Aisyah';renderOrder();
+}
+function nasiCheck(tokens, expected){
+ const norm=ts=>ts.filter(t=>!['Kak','Saya nak'].includes(t)).map(t=>t==='Satu nasi lemak'?'Nasi lemak satu':t);
+ const actual=norm(tokens), answer=norm(expected);
+ return actual.length===answer.length && new Set(actual).size===actual.length && answer.every(t=>actual.includes(t));
+}
+function nasiSubmit(){
+ hideTip();
+ const st=nasiStage();
+ if(!nasiCheck(L.tokens,st.a)){
+  L.tries++; SFX.bad();
+  const wrong=L.tokens.filter(t=>!['Kak','Saya nak'].includes(t));
+  openModal(`<h2>Let’s adjust that part</h2><p>You chose: ${wrong.length?wrong.map(t=>`${tag(t)} — ${GLOSS[t].short}`).join('; '):'only a greeting'}.</p><p>The customer needs: ${st.a.map(t=>`${tag(t)} — ${GLOSS[t].short}`).join('; ')}.</p><p>Your earlier replies are kept.</p><button class="btn primary" data-act="retry" data-primary>Try again</button>`,{retry:()=>{closeModal();nasiTurn();},close:()=>{closeModal();nasiTurn();}});return;
+ }
+ L.accepted.push(...st.a);L.stage++;SFX.pop();
+ if(L.stage<L.lv.prompts[L.idx].stages.length){nasiTurn();return;}
+ const star=!L.tries&&!L.hinted,pts=L.tries?40:star?100:60;
+ L.score+=pts;if(star)L.perfect++;L.results[L.idx]=star?'star':'ok';SFX.good();renderStats();
+ const next=()=>{closeModal();if(L.idx===L.lv.prompts.length-1)finishLevel();else nextPrompt();};
+ openModal(`<div class="center"><div class="served">${nasiSVG(L.accepted)}</div><h2>Swee! Order coming right up!</h2><p>Kak Aisyah: “Your meal is ready. Enjoy!”</p><p>${L.accepted.map(t=>GLOSS[t].short).join(' · ')}</p><div class="pts">+${pts} pts ${star?'★ perfect':''}</div><p>Say thank you: <b>Terima kasih</b>. This does not affect your score.</p><div class="row-btns"><button class="btn primary" data-act="thanks" data-primary>Terima kasih — Thank you</button><button class="btn ghost" data-act="next">${L.idx===5?'Finish lesson':'Next customer'}</button></div></div>`,{thanks:next,next,close:next});
+}
 
 const HUB_TIPS = [
   'A tissue packet on a table means the seat is “choped” (reserved). Find another seat!',
@@ -708,8 +798,8 @@ function noodleInfo(tokens) {
   const parts = [nd ? GLOSS[nd].short : 'which noodle?', dry ? 'dry, soup on the side' : soup ? 'in soup' : 'dry or soup?', chili ? 'with chili' : noChili ? 'no chili' : 'chili or not?'];
   return { cap: parts.join(', '), sweet: null };
 }
-const artFor = (lv, tokens) => lv.kind === 'drink' ? drinkSVG(tokens) : noodleSVG(tokens);
-const infoFor = (lv, tokens) => lv.kind === 'drink' ? drinkInfo(tokens) : noodleInfo(tokens);
+const artFor = (lv, tokens) => lv.kind === 'nasi' ? nasiSVG(tokens) : lv.kind === 'drink' ? drinkSVG(tokens) : noodleSVG(tokens);
+const infoFor = (lv, tokens) => lv.kind === 'nasi' ? {cap:tokens.filter(t=>GLOSS[t] && GLOSS[t].cat!=='polite').map(t=>GLOSS[t].short).join(' · ') || 'Build your nasi lemak meal',sweet:null} : lv.kind === 'drink' ? drinkInfo(tokens) : noodleInfo(tokens);
 
 /* =========================================================
    UI HELPERS
@@ -757,9 +847,9 @@ $('#heroArt').innerHTML = `<span class="stool">${stoolSVG('#e04b3a')}</span>${dr
    MAP
    ========================================================= */
 const W = 800, H = 540;
-const STALLS = [{ x: 50, w: 250 }, { x: 500, w: 250 }].map(s => ({ ...s, cx: s.x + s.w / 2, standY: 205 }));
-const TABLES = [{ x: 160, y: 300 }, { x: 400, y: 300 }, { x: 640, y: 300 }, { x: 160, y: 440 }, { x: 640, y: 440 }];
-const OBST = TABLES.map(t => ({ x: t.x, y: t.y, r: 70 }));
+const STALLS = [{ x: 20, w: 240 }, { x: 280, w: 240 }, { x: 540, w: 240 }].map(s => ({ ...s, cx: s.x + s.w / 2, standY: 205 }));
+const TABLES = [{ x: 160, y: 300 }, { x: 640, y: 300 }, { x: 160, y: 440 }, { x: 640, y: 440 }];
+const OBST = [...TABLES.map(t => ({ x: t.x, y: t.y, r: 70 })), {x:400,y:317,r:80}];
 const BOUNDS = { x0: 18, x1: 782, y0: 196, y1: 518 };
 const STOOL_COLS = ['#e04b3a', '#2e86de', '#1f8a5b', '#ffc93c'];
 
@@ -773,6 +863,8 @@ function stallMarkup(st, i) {
   if (lv.kind === 'drink') {
     for (let k = 0; k < 3; k++) m += `<rect x="${x + 14 + k * 20}" y="${y + 70}" width="15" height="24" rx="3" fill="#6b3f1f" stroke="#1e2a24" stroke-width="1.5"/><rect x="${x + 14 + k * 20}" y="${y + 70}" width="15" height="6" rx="2" fill="#e04b3a" stroke="#1e2a24" stroke-width="1.5"/>`;
     for (let k = 0; k < 3; k++) m += `<rect x="${x + w - 72 + k * 20}" y="${y + 74}" width="15" height="20" rx="2" fill="#fff" stroke="#1e2a24" stroke-width="1.5"/><rect x="${x + w - 72 + k * 20}" y="${y + 80}" width="15" height="6" fill="#2e86de"/>`;
+  } else if (lv.kind === 'nasi') {
+    m += `<rect x="${x+14}" y="${y+67}" width="60" height="31" rx="4" fill="#287955" stroke="#1e2a24"/><text x="${x+44}" y="${y+87}" text-anchor="middle" fill="white" font-size="10">SELAMAT</text>`;
   } else {
     for (let k = 0; k < 3; k++) m += `<path d="M${x + 18 + k * 20} ${y + 68} q-4 10 0 22 q4 4 8 0 q4 -12 0 -22Z" fill="#f3c64f" stroke="#b98a1c" stroke-width="1.5"/>`;
     for (let k = 0; k < 3; k++) m += `<path d="M${x + w - 64 + k * 18} ${y + 66} v18" stroke="#8fa0aa" stroke-width="3"/><ellipse cx="${x + w - 64 + k * 18}" cy="${y + 88}" rx="6" ry="4" fill="#b7c2c9" stroke="#1e2a24" stroke-width="1.5"/>`;
@@ -784,6 +876,8 @@ function stallMarkup(st, i) {
     for (let k = 0; k < 3; k++) { const px = x + 26 + k * 28; m += `<ellipse cx="${px}" cy="${y + 112}" rx="11" ry="3.5" fill="#fbf7ee" stroke="#1e2a24" stroke-width="1.5"/><path d="M${px - 7} ${y + 100} Q${px - 7} ${y + 111} ${px} ${y + 111} Q${px + 7} ${y + 111} ${px + 7} ${y + 100}Z" fill="#fbf7ee" stroke="#1e2a24" stroke-width="1.5"/><ellipse cx="${px}" cy="${y + 100}" rx="7" ry="2.2" fill="#6b3f1f"/>`; }
     const kx = x + w - 48;
     m += `<path d="M${kx + 12} ${y + 104} L${kx + 30} ${y + 84}" stroke="#b7c2c9" stroke-width="4" stroke-linecap="round"/><path d="M${kx - 12} ${y + 110} Q${kx - 14} ${y + 90} ${kx} ${y + 88} Q${kx + 14} ${y + 90} ${kx + 12} ${y + 110}Z" fill="url(#steel)" stroke="#1e2a24" stroke-width="1.8"/><path d="M${kx - 8} ${y + 90} Q${kx} ${y + 78} ${kx + 8} ${y + 90}" fill="none" stroke="#1e2a24" stroke-width="2"/>`;
+  } else if (lv.kind === 'nasi') {
+    m += `<svg x="${x+w-90}" y="${y+51}" width="87" height="68">${nasiSVG(['Nasi lemak satu','Ayam goreng','Sambal biasa'])}</svg>`;
   } else {
     for (let k = 0; k < 3; k++) { const px = x + 28 + k * 30; m += `<path d="M${px - 11} ${y + 102} Q${px - 10} ${y + 113} ${px} ${y + 113} Q${px + 10} ${y + 113} ${px + 11} ${y + 102}Z" fill="#fbf7ee" stroke="#1e2a24" stroke-width="1.5"/><ellipse cx="${px}" cy="${y + 102}" rx="11" ry="3.2" fill="#fbf7ee" stroke="#1e2a24" stroke-width="1.5"/><path d="M${px - 10} ${y + 106} Q${px} ${y + 110} ${px + 10} ${y + 106}" stroke="#e04b3a" stroke-width="1.5" fill="none"/>`; }
     const pxo = x + w - 52;
@@ -791,7 +885,7 @@ function stallMarkup(st, i) {
     [[-12, 104], [-3, 107], [7, 103], [15, 106], [0, 101]].forEach(([dx, yy]) => m += `<circle cx="${pxo + dx}" cy="${y + yy}" r="3.3" fill="#fffdf6" stroke="#bfb293" stroke-width="1"/>`);
     m += `<g class="steam" stroke="#fff" stroke-width="2.5" fill="none" stroke-linecap="round" opacity=".9"><path d="M${pxo - 6} ${y + 96} q-4 -6 0 -12 q4 -6 0 -12"/><path d="M${pxo + 8} ${y + 96} q-4 -6 0 -12 q4 -6 0 -12"/></g>`;
   }
-  const n = 10, sw = w / n, aw = i === 0 ? ['#e04b3a', '#fff'] : ['#1f8a5b', '#fff'];
+  const n = 10, sw = w / n, aw = i === 2 ? ['#d9a53b','#236952'] : i === 0 ? ['#e04b3a', '#fff'] : ['#1f8a5b', '#fff'];
   for (let k = 0; k < n; k++) m += `<circle cx="${x + k * sw + sw / 2}" cy="${y + 20}" r="${sw / 2}" fill="${aw[k % 2]}" stroke="#1e2a24" stroke-width="1.5"/>`;
   for (let k = 0; k < n; k++) m += `<rect x="${x + k * sw}" y="${y}" width="${sw}" height="20" fill="${aw[k % 2]}"/>`;
   m += `<rect x="${x}" y="${y}" width="${w}" height="20" fill="none" stroke="#1e2a24" stroke-width="2.5"/>`;
@@ -808,7 +902,7 @@ function tableMarkup(t, i) {
     m += `<circle cx="${sx.toFixed(1)}" cy="${sy.toFixed(1)}" r="13" fill="${cols[k]}" stroke="#1e2a24" stroke-width="2.5"/><circle cx="${sx.toFixed(1)}" cy="${sy.toFixed(1)}" r="4.5" fill="rgba(0,0,0,.28)"/>`;
   });
   m += `<circle cx="${t.x}" cy="${t.y + 3}" r="36" fill="rgba(0,0,0,.12)"/><circle cx="${t.x}" cy="${t.y}" r="36" fill="#f6f4ee" stroke="#1e2a24" stroke-width="2.5"/><circle cx="${t.x}" cy="${t.y}" r="29" fill="none" stroke="#d8d2c4" stroke-width="2"/>`;
-  if (i === 0 || i === 2 || i === 4) m += `<g class="chope" tabindex="0" role="button" aria-label="Tissue packet on the table"><title>A tissue packet: this seat is choped!</title><g transform="rotate(-14 ${t.x} ${t.y})"><rect x="${t.x - 13}" y="${t.y - 8}" width="26" height="16" rx="3" fill="#fff" stroke="#1e2a24" stroke-width="1.8"/><path d="M${t.x - 9} ${t.y - 3} h18 M${t.x - 9} ${t.y + 2} h18" stroke="#2e86de" stroke-width="2"/></g></g>`;
+  if (i === 0 || i === 1 || i === 3) m += `<g class="chope" tabindex="0" role="button" aria-label="Tissue packet on the table"><title>A tissue packet: this seat is choped!</title><g transform="rotate(-14 ${t.x} ${t.y})"><rect x="${t.x - 13}" y="${t.y - 8}" width="26" height="16" rx="3" fill="#fff" stroke="#1e2a24" stroke-width="1.8"/><path d="M${t.x - 9} ${t.y - 3} h18 M${t.x - 9} ${t.y + 2} h18" stroke="#2e86de" stroke-width="2"/></g></g>`;
   return m;
 }
 
@@ -824,7 +918,7 @@ function buildMap() {
   <text x="400" y="23" text-anchor="middle" class="map-title">MAXWELL FOOD CENTRE</text>`;
   s += STALLS.map(stallMarkup).join('');
   // tray return
-  s += `<g><rect x="334" y="60" width="132" height="94" rx="8" fill="#2f6f55" stroke="#1e2a24" stroke-width="3"/><text x="400" y="82" text-anchor="middle" class="tray-t">TRAY RETURN</text>`;
+  s += `<g transform="translate(0 210)"><rect x="334" y="60" width="132" height="94" rx="8" fill="#2f6f55" stroke="#1e2a24" stroke-width="3"/><text x="400" y="82" text-anchor="middle" class="tray-t">TRAY RETURN</text>`;
   ['#e04b3a', '#2e86de', '#1f8a5b', '#ffc93c'].forEach((c, k) => s += `<rect x="${360 + k * 3}" y="${96 + k * 11}" width="80" height="10" rx="3" fill="${c}" stroke="#1e2a24" stroke-width="1.5"/>`);
   s += `</g>`;
   // entrance & plants
@@ -956,7 +1050,7 @@ function renderHub() {
   $('#lessonList').innerHTML = LEVELS.map((lv, i) => {
     const sv = levelSave(lv.id), un = unlocked(i), status = !un ? 'locked' : sv.done ? 'done' : 'new';
     return `<button class="lesson-card ${un ? '' : 'locked'}" data-li="${i}" aria-label="${lv.title} with ${lv.npc}, ${status}">
-      <div class="lc-icon">${lv.kind === 'drink' ? drinkSVG(['Kopi', 'O']) : noodleSVG(['Mee Pok', 'Soup'])}</div>
+      <div class="lc-icon">${artFor(lv, lv.example.tokens)}</div>
       <div><div class="lc-stall">${lv.stall}</div><div class="lc-title">Lesson ${i + 1}: ${lv.title}</div><div class="lc-npc">with ${lv.npc}, ${lv.role}</div></div>
       <div class="lc-right"><div class="stars">${starsHTML(sv.stars)}</div><span class="badge b-${status}">${!un ? '🔒 Locked' : sv.done ? 'Done' : 'New'}</span></div>
     </button>`;
@@ -967,7 +1061,7 @@ function renderHub() {
   $('#hubStars').textContent = `★ ${totalStars}/${LEVELS.length * 3}`;
   $('#hubPts').textContent = `${pts} pts`;
   $('#gradBanner').innerHTML = LEVELS.every(l => levelSave(l.id).done)
-    ? `<div class="card grad"><span>🏅</span><div><b>Maxwell regular</b>You can order kopi and fishball noodles like a local. Replay to collect every star.</div></div>` : '';
+    ? `<div class="card grad"><span>🏅</span><div><b>Maxwell regular</b>You can order kopi, fishball noodles and nasi lemak like a local. Replay to collect every star.</div></div>` : '';
   $('#hubTip').textContent = pick(HUB_TIPS);
   $('#soundBtn').textContent = save.sound ? '🔊' : '🔇';
   STALLS.forEach((_, i) => {
@@ -1019,11 +1113,14 @@ function showIntro() {
 
 function renderPrompt() {
   const lv = L.lv, p = lv.prompts[L.idx];
-  L.tokens = []; L.tries = 0; L.hinted = false;
+  L.tokens = []; L.tries = 0; L.hinted = false; L.stage = 0; L.accepted = [];
   $('#custPortrait').innerHTML = avatarSVG(p.c.av);
   $('#custName').textContent = p.c.name; $('#custTag').textContent = p.c.tag;
   $('#custQuote').textContent = `“${p.q}”`;
   const cc = $('#custCard'); cc.classList.remove('enter'); void cc.offsetWidth; cc.classList.add('enter');
+  if(lv.kind === 'nasi') { $('#custQuote').textContent += ' '+NASI_BASE; renderStats(); nasiTurn(); return; }
+  $('.chips-label').textContent="Tap chips in the order you’d say them. Hover or long-press for meaning.";
+  $('#orderBtn').textContent='Place order';
   setBubble(lv.next[L.idx % lv.next.length]);
   const box = $('#chips'); box.innerHTML = '';
   shuffle(lv.chips).forEach(t => box.appendChild(makeChip(t)));
@@ -1080,13 +1177,15 @@ function renderOrder() {
     ? L.tokens.map((t, i) => `<button class="tok" data-i="${i}" style="--cc:${catColor(t)}" aria-label="Remove ${t}">${t}<span aria-hidden="true">✕</span></button>`).join('')
     : `<span class="placeholder">Tap the chips below to build the order…</span>`;
   $('#sayLine').innerHTML = L.tokens.length ? `You say: <b>“${lv.honor}, one ${phrase(L.tokens)}!”</b>` : '&nbsp;';
-  $('#previewArt').innerHTML = artFor(lv, L.tokens);
-  const info = infoFor(lv, L.tokens);
+  const shown = lv.kind==='nasi' ? [...L.accepted,...L.tokens] : L.tokens;
+  if(lv.kind==='nasi') $('#sayLine').textContent = L.tokens.length ? 'You say: “'+phrase(L.tokens)+'”' : 'Your turn to reply';
+  $('#previewArt').innerHTML = artFor(lv, shown);
+  const info = infoFor(lv, shown);
   $('#previewCap').textContent = info.cap;
   $('#previewSweet').innerHTML = info.sweet == null ? '' :
     `<div class="sweet">Sweet ${[0, 1, 2].map(i => `<i class="${i < info.sweet ? 'on' : ''}"></i>`).join('')}${info.sweet > 2 ? '<i class="on"></i>' : ''}</div>`;
   $('#slots').innerHTML = lv.slots.map(c => {
-    const t = L.tokens.find(x => GLOSS[x].cat === c);
+    const t = shown.find(x => GLOSS[x].cat === c);
     return `<div class="slot ${t ? 'filled' : ''}" style="--cc:${CATS[c].color}"><small>${CATS[c].label}${lv.optional.includes(c) ? ' (optional)' : ''}</small><b>${t || '…'}</b></div>`;
   }).join('<span class="sarrow">›</span>');
   $$('.chip').forEach(c => { const used = L.tokens.includes(c.dataset.term); c.classList.toggle('used', used); c.setAttribute('aria-disabled', used); });
@@ -1101,6 +1200,7 @@ $('#phrase').addEventListener('click', e => {
 
 function hint() {
   if (!L || modalOpen) return;
+  if(L.lv.kind==='nasi'){L.hinted=true;setBubble('Try: '+nasiStage().a.join(' · ')+' — '+nasiStage().a.map(t=>GLOSS[t].short).join(', '));return;}
   const a = L.lv.prompts[L.idx].a; let k = 0;
   while (k < L.tokens.length && k < a.length && L.tokens[k] === a[k]) k++;
   if (k < L.tokens.length) { L.hinted = true; setBubble(`Hmm, “${L.tokens[k]}” doesn’t fit there. Remove it and try again.`); }
@@ -1142,6 +1242,7 @@ function confettiHTML() {
 function submit() {
   if (!L || modalOpen || !L.tokens.length) return;
   const lv = L.lv, p = lv.prompts[L.idx];
+  if(lv.kind==='nasi'){nasiSubmit();return;}
   const r = evaluate(L.tokens, p.a, lv);
   const isLast = L.idx === lv.prompts.length - 1;
   if (r.type === 'wrong') {
@@ -1194,7 +1295,6 @@ function finishLevel() {
   const prev = levelSave(lv.id);
   save.levels[lv.id] = { done: true, stars: Math.max(prev.stars, stars), best: Math.max(prev.best, L.score) };
   persist();
-  const nextLv = LEVELS[L.li + 1];
   const allDone = LEVELS.every(l => levelSave(l.id).done);
   renderStats();
   SFX.good();
@@ -1202,8 +1302,8 @@ function finishLevel() {
     <h2>Lesson complete!</h2>
     <div class="bigstars" aria-label="${stars} of 3 stars">${starsHTML(stars)}</div>
     <p style="font-weight:800;margin:.2em 0">${p}/${n} perfect first-try orders · ${L.score} pts</p>
-    <p class="npc-say"><b>${lv.npc}:</b> “${stars === 3 ? 'Wah, confirm local! Next time kopi on the house.' : stars === 2 ? 'Not bad at all! Practise a bit more, can be perfect.' : 'Steady progress. Come back tomorrow, try again!'}”</p>
-    ${allDone && !nextLv ? `<div class="unlock">🏅 You’ve cleared both stalls. You’re officially a Maxwell regular!</div>` : ''}
+    <p class="npc-say"><b>${lv.npc}:</b> “${lv.kind==='nasi' ? 'Well done! Come back and practise any time.' : stars === 3 ? 'Wah, confirm local! Next time kopi on the house.' : stars === 2 ? 'Not bad at all! Practise a bit more, can be perfect.' : 'Steady progress. Come back tomorrow, try again!'}”</p>
+    ${allDone ? `<div class="unlock">🏅 You’ve cleared all three stalls. You’re officially a Maxwell regular!</div>` : ''}
     <div class="row-btns"><button class="btn ghost" data-act="replay">Replay lesson</button><button class="btn primary" data-act="hub" data-primary>Back to Maxwell</button></div></div>`,
     { hub: backToHub, close: backToHub, replay: () => { closeModal(); openLesson(L.li); } });
 }
