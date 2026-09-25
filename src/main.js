@@ -1,7 +1,8 @@
-import '@fontsource/nunito/latin-600.css';
-import '@fontsource/nunito/latin-700.css';
-import '@fontsource/nunito/latin-800.css';
-import '@fontsource/nunito/latin-900.css';
+import '@fontsource/permanent-marker/latin-400.css';
+import '@fontsource/outfit/latin-400.css';
+import '@fontsource/outfit/latin-500.css';
+import '@fontsource/outfit/latin-600.css';
+import '@fontsource/outfit/latin-700.css';
 import './styles/base.css';
 import './styles/experience.css';
 import { $, $$ } from './shared/dom.js';
