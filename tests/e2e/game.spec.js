@@ -44,7 +44,9 @@ test('3D hall renders, routes to a stall and opens the original lesson', async (
 test('all eighteen customers, Malay turns, graduation and progress survive reload', async ({
   page,
 }) => {
-  test.slow();
+  // This journey submits all 18 customers, including every Malay conversation
+  // turn. Allow software-rendered CI browsers time to exercise the real UI.
+  test.setTimeout(480_000);
   await enter(page);
   for (let i = 0; i < LEVELS.length; i++) {
     const level = LEVELS[i];
