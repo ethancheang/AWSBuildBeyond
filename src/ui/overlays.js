@@ -19,6 +19,7 @@ function openModal(html, acts = {}) {
   modalActs = acts;
   modalOpen = true;
   $('#modal').hidden = false;
+  $('#world').inert = true;
   document.querySelectorAll('.screen').forEach((screen) => {
     screen.inert = true;
   });
@@ -34,6 +35,7 @@ function closeModal() {
   $('#modal').hidden = true;
   modalOpen = false;
   modalActs = {};
+  $('#world').inert = !$('#hub').classList.contains('active');
   document.querySelectorAll('.screen').forEach((screen) => {
     screen.inert = false;
   });

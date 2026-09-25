@@ -6,7 +6,6 @@ import '@fontsource/outfit/latin-700.css';
 import './styles/base.css';
 import './styles/experience.css';
 import { $, $$ } from './shared/dom.js';
-import { drinkSVG, noodleSVG } from './art/food.js';
 import { save, persist } from './state/progress.ts';
 import { beep, SFX } from './audio/sound.js';
 import {
@@ -19,18 +18,10 @@ import {
 } from './ui/overlays.js';
 import { createLessons } from './lessons/controller.js';
 import { createHub } from './ui/hub.js';
-$('#bunting').innerHTML = Array.from(
-  { length: 16 },
-  (_, i) =>
-    `<i style="--c:${['#e04b3a', '#ffc93c', '#2e86de', '#fff'][i % 4]}"></i>`,
-).join('');
-const stoolSVG = (c) =>
-  `<svg viewBox="0 0 60 60"><path d="M10 18 L16 58 M50 18 L44 58 M13 40 H47" stroke="${c}" stroke-width="6" stroke-linecap="round"/><ellipse cx="30" cy="16" rx="24" ry="8" fill="${c}" stroke="#1e2a24" stroke-width="2.5"/><ellipse cx="30" cy="15" rx="6" ry="2.4" fill="rgba(0,0,0,.3)"/></svg>`;
-$('#heroArt').innerHTML =
-  `<span class="stool">${stoolSVG('#e04b3a')}</span>${drinkSVG(['Kopi'])}${noodleSVG(['Mee Pok', 'Soup', 'Chili'])}${drinkSVG(['Teh', 'Peng'])}<span class="stool">${stoolSVG('#2e86de')}</span>`;
-
 function show(id) {
   hideTip();
+  document.body.dataset.screen = id;
+  $('#world').inert = id !== 'hub';
   $$('.screen').forEach((s) => s.classList.toggle('active', s.id === id));
   window.scrollTo(0, 0);
 }
@@ -77,3 +68,8 @@ addEventListener('keydown', (e) => {
 });
 addEventListener('scroll', hideTip, { passive: true });
 if (import.meta.hot) import.meta.hot.dispose(() => hub.dispose());
+
+document.body.dataset.screen = 'title';
+$('#world').inert = true;
+hub.renderHub();
+hub.loadWorld();

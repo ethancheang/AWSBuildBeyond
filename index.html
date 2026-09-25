@@ -13,36 +13,26 @@
     />
   </head>
   <body>
-    <!-- ============ TITLE ============ -->
+    <div id="world" aria-label="Singapore hawker centre">
+      <p id="worldStatus" role="status">Getting the stalls ready…</p>
+    </div>
     <section id="title" class="screen active" aria-label="Title screen">
-      <div class="card title-card">
-        <div class="bunting" id="bunting" aria-hidden="true"></div>
-        <div class="hero-art" id="heroArt" aria-hidden="true"></div>
-        <p class="eyebrow">SINGAPORE, ONE ORDER AT A TIME</p>
+      <div class="title-card">
+        <p class="eyebrow">SINGAPORE · COME IN, MAKAN</p>
         <h1>Kopi That!</h1>
+        <p class="title-tagline">Learn the lingo. Nail the order.</p>
         <p class="lede">
-          Walk the hawker centre, meet the uncle and auntie behind the counter,
-          and learn to order kopi, fishball noodles and nasi lemak like a local.
+          A seat at the table. A word with the hawker.<br />Find your voice in
+          Singapore, one order at a time.
         </p>
-        <div class="how">
-          <div><b>🚶</b>Walk up to a stall and talk to the hawker</div>
-          <div><b>🗣️</b>Read what the customer is craving</div>
-          <div><b>🧩</b>Tap lingo chips in order to build the order</div>
-        </div>
-        <button
-          class="btn primary"
-          id="startBtn"
-          style="font-size: 1.1rem; padding: 0.7em 1.6em"
-        >
+        <button class="btn primary" id="startBtn">
           Let's makan <span aria-hidden="true">↗</span>
         </button>
         <p class="title-footnote">
-          3 stalls · 18 customers · A taste of local life
+          8 stalls to discover · 3 lessons to savour · 18 customers
         </p>
       </div>
     </section>
-
-    <!-- ============ HUB ============ -->
     <section
       id="hub"
       class="screen"
@@ -56,68 +46,93 @@
           </div>
         </div>
         <div class="top-actions">
-          <span class="pill" id="hubStars">★ 0/9</span>
-          <span class="pill" id="hubPts">0 pts</span>
+          <span class="pill" id="hubStars">★ 0/9</span
+          ><span class="pill" id="hubPts">0 pts</span>
           <button class="icon-btn" id="glossBtn" aria-label="Lingo guide">
-            📖 <span class="hide-sm">Lingo guide</span>
+            ▤ <span class="hide-sm">Lingo guide</span>
           </button>
           <button class="icon-btn" id="soundBtn" aria-label="Toggle sound">
-            🔊
+            ♫
           </button>
         </div>
       </header>
       <div class="hub-heading">
-        <div>
-          <p class="eyebrow">THE HAWKER TRAIL / SINGAPORE</p>
-          <h1>Come hungry. <em>Leave local.</em></h1>
-          <p>Your next conversation is just a few steps away.</p>
-        </div>
-        <span class="location-label">◎ &nbsp; Lau Pa Sat-inspired hall</span>
+        <p class="eyebrow">LAU PA SAT, REIMAGINED</p>
+        <h1>Under one roof.</h1>
+        <p>Eight stalls. A whole lot of local.</p>
+        <span id="worldMode"><i></i> EXPLORE THE CENTRE</span>
       </div>
-      <div class="hub-body">
-        <div class="map-col">
-          <div class="map-wrap">
-            <div class="world-toolbar">
-              <span id="worldMode"><i></i> EXPLORE THE CENTRE</span
-              ><button id="cameraBtn" aria-label="Reset camera view">
-                ↺ Reset view
-              </button>
-            </div>
-            <div id="world">
-              <p id="worldStatus" role="status">Getting the stalls ready…</p>
-            </div>
-            <button id="talkBtn" class="talk-btn" hidden></button>
-          </div>
-          <p class="map-help" id="worldHelp">
-            <span><kbd>WASD</kbd> / arrows to walk</span
-            ><span><kbd>E</kbd> / <kbd>Enter</kbd> to talk</span
-            ><span>Click to walk · Drag to look · Scroll to zoom</span>
-          </p>
+      <div class="world-toolbar" aria-label="Camera controls">
+        <div class="view-switch">
+          <button id="hallViewBtn" aria-pressed="true">Hall view</button
+          ><button id="floorViewBtn" aria-pressed="false">Floor plan</button>
         </div>
-        <aside class="side">
-          <div class="card side-card">
-            <p class="eyebrow">GOOD FOOD, GOOD CONVERSATIONS</p>
-            <h2>Meet your hawkers<span>03</span></h2>
-            <p class="side-intro">Pick a stall. We'll walk you there.</p>
-            <div id="lessonList"></div>
-            <label class="direct-option"
-              ><input type="checkbox" id="directLessons" /> Skip the walk, start
-              lessons directly</label
-            >
+        <button id="cameraBtn" class="icon-btn" aria-label="Reset camera view">
+          ↺
+        </button>
+      </div>
+      <button
+        id="hawkersToggle"
+        class="panel-toggle"
+        aria-expanded="true"
+        aria-controls="hawkerPanel"
+      >
+        Meet your hawkers <span>03</span>
+      </button>
+      <aside
+        class="side hud-panel"
+        id="hawkerPanel"
+        aria-label="Meet your hawkers"
+      >
+        <div class="panel-heading">
+          <div>
+            <p class="eyebrow">THREE WAYS TO SAY SHIOK</p>
+            <h2>Meet your hawkers</h2>
           </div>
-          <div id="gradBanner"></div>
-          <div class="card side-card">
-            <h3>💡 A little local knowledge</h3>
-            <p id="hubTip"></p>
-            <button class="link-btn" id="resetBtn">Reset progress</button>
-          </div>
-        </aside>
+          <button
+            class="close-panel"
+            id="closeHawkers"
+            aria-label="Close hawker panel"
+          >
+            ×
+          </button>
+        </div>
+        <p class="side-intro">Pick a stall. We'll walk you there.</p>
+        <div id="lessonList"></div>
+        <label class="direct-option"
+          ><input type="checkbox" id="directLessons" /> Skip the walk, start
+          lessons directly</label
+        >
+        <div id="gradBanner"></div>
+        <details class="neighbours">
+          <summary>Next on the menu <span>05</span></summary>
+          <p>Our neighbours are setting up. Lessons coming later.</p>
+          <ul id="placeholderList"></ul>
+        </details>
+        <div class="local-tip">
+          <h3>A little local knowledge</h3>
+          <p id="hubTip"></p>
+          <button class="link-btn" id="resetBtn">Reset progress</button>
+        </div>
+      </aside>
+      <button id="talkBtn" class="talk-btn" hidden></button>
+      <footer class="map-help" id="worldHelp">
+        <span><kbd>WASD</kbd> Walk</span
+        ><span><kbd>E</kbd> / <kbd>Enter</kbd> Talk</span
+        ><span class="hide-sm"
+          >Click to walk · Drag to look · Scroll to zoom</span
+        ><span class="touch-help"
+          >Tap to walk · Drag to look · Pinch to zoom</span
+        >
+      </footer>
+      <div class="venue-stamp" aria-hidden="true">
+        ONE LITTLE RED DOT.<br /><b>A WORLD OF FLAVOUR.</b>
       </div>
     </section>
     <noscript
       ><p class="card">
-        Kopi That! needs JavaScript to run the interactive lessons. Please
-        enable it and reload.
+        Kopi That! needs JavaScript for its interactive lessons. Please enable
+        it and reload.
       </p></noscript
     >
 

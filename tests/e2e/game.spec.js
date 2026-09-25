@@ -4,6 +4,8 @@ import { LEVELS } from '../../src/content/lessons.ts';
 async function enter(page, direct = true) {
   await page.goto('/');
   await page.getByRole('button', { name: /Let's makan/ }).click();
+  if (!(await page.locator('#hawkerPanel').isVisible()))
+    await page.locator('#hawkersToggle').click();
   if (direct) await page.getByLabel('Skip the walk').check();
 }
 async function choose(page, terms) {

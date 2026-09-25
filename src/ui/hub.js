@@ -4,6 +4,7 @@ import { artFor } from '../art/food.js';
 import { save, levelSave } from '../state/progress.ts';
 import { starsHTML } from './format.js';
 import { modalOpen, toast } from './overlays.js';
+import { PLACEHOLDER_STALLS, STALLS } from '../content/stalls.ts';
 
 export function createHub({ openLesson }) {
   let world,
@@ -22,8 +23,12 @@ export function createHub({ openLesson }) {
     if (loading) return loading;
     if (world || unavailable) return;
     $('#worldStatus').hidden = false;
-    loading = import('../world/scene.ts')
-      .then(({ createWorld }) => {
+    loading = Promise.all([
+      import('../world/scene.ts'),
+      document.fonts.load('400 64px "Permanent Marker"'),
+      document.fonts.load('500 28px Outfit'),
+    ])
+      .then(([{ createWorld }]) => {
         world = createWorld({
           container: $('#world'),
           isActive: () => $('#hub').classList.contains('active') && !modalOpen,
@@ -59,24 +64,41 @@ export function createHub({ openLesson }) {
     }
     world.goToStall(index);
     $('#world canvas')?.focus({ preventScroll: true });
-    if (window.innerWidth < 900)
-      $('#world').scrollIntoView({
-        behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches
-          ? 'instant'
-          : 'smooth',
-        block: 'center',
-      });
+    if (window.innerWidth <= 1000) setPanel(false);
   }
   $('#talkBtn').addEventListener('click', () => {
     if (nearby >= 0) openLesson(nearby);
   });
-  $('#cameraBtn').addEventListener('click', () => world?.resetCamera());
+  function setView(view) {
+    world?.setView(view);
+    $('#hallViewBtn').setAttribute('aria-pressed', String(view === 'hall'));
+    $('#floorViewBtn').setAttribute('aria-pressed', String(view === 'floor'));
+  }
+  $('#cameraBtn').addEventListener('click', () => setView('hall'));
+  $('#hallViewBtn').addEventListener('click', () => setView('hall'));
+  $('#floorViewBtn').addEventListener('click', () => setView('floor'));
+  function setPanel(open) {
+    $('#hawkerPanel').hidden = !open;
+    $('#hawkersToggle').setAttribute('aria-expanded', String(open));
+    if (!open && $('#hawkerPanel').contains(document.activeElement))
+      $('#hawkersToggle').focus();
+  }
+  $('#hawkersToggle').addEventListener('click', () =>
+    setPanel($('#hawkerPanel').hidden),
+  );
+  $('#closeHawkers').addEventListener('click', () => setPanel(false));
+  // A drawer on smaller screens leaves the world available for touch navigation.
+  setPanel(window.innerWidth > 1000);
+  $('#placeholderList').innerHTML = PLACEHOLDER_STALLS.map(
+    (stall) =>
+      `<li><span class="placeholder-dot" style="--stall-color:${stall.color}"></span><div><strong>${stall.name}</strong><small>${stall.cuisine} · Coming soon</small></div></li>`,
+  ).join('');
   function renderHub() {
     $('#lessonList').innerHTML = LEVELS.map((lv, i) => {
       const progress = levelSave(lv.id);
       return `<button class="lesson-card" data-li="${i}" aria-label="${lv.title} with ${lv.npc}, ${progress.done ? 'done' : 'new'}">
         <div class="lc-icon">${artFor(lv, lv.example.tokens)}</div>
-        <div><div class="lc-stall">STALL 0${i + 1} · ${lv.type}</div><div class="lc-title">${lv.title}</div><div class="lc-npc">${lv.npc} <span aria-hidden="true">↗</span></div></div>
+        <div><div class="lc-stall">STALL 0${STALLS.findIndex((stall) => stall.lessonIndex === i) + 1} · ${lv.type}</div><div class="lc-title">${lv.title}</div><div class="lc-npc">${lv.npc} <span aria-hidden="true">↗</span></div></div>
         <div class="lc-right"><span class="stars" aria-label="${progress.stars} of 3 stars">${starsHTML(progress.stars)}</span><span class="badge ${progress.done ? 'b-done' : ''}">${progress.done ? 'Completed' : '6 customers'}</span></div></button>`;
     }).join('');
     $$('.lesson-card').forEach((button) =>
