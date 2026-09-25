@@ -238,7 +238,9 @@ export function createWorld(options: WorldOptions) {
     forward = new THREE.Vector3();
   function frame(time: number) {
     if (disposed) return;
-    const dt = Math.min((time - previousTime) / 1000, 0.05);
+    // Collision movement uses small substeps. Accommodate slower devices without
+    // making walking run in slow motion, while bounding work after a long stall.
+    const dt = Math.min((time - previousTime) / 1000, 0.2);
     previousTime = time;
     elapsed += dt;
     if (options.isActive()) {

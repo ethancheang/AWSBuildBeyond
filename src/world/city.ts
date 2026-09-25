@@ -291,7 +291,7 @@ export function buildCity(scene: THREE.Scene) {
     mesh.instanceMatrix.needsUpdate = true;
     mesh.computeBoundingSphere();
     // The hall owns the shadow budget; the distant city uses ambient lighting.
-    mesh.receiveShadow = true;
+    mesh.receiveShadow = false;
     city.add(mesh);
   }
   return {
