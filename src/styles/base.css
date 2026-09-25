@@ -64,7 +64,6 @@ body {
   min-height: 100%;
   color: var(--ink);
   font-family: var(--font-b);
-  font-size: 16px;
   line-height: 1.45;
   background-color: var(--bg);
   background-image:
@@ -86,7 +85,6 @@ button:focus-visible,
 kbd {
   font-family: var(--font-b);
   font-weight: 800;
-  font-size: 0.78em;
   padding: 0.05em 0.45em;
   border: 2px solid currentColor;
   border-radius: 6px;
@@ -154,7 +152,6 @@ kbd {
   padding: 0;
   color: var(--muted);
   text-decoration: underline;
-  font-size: 0.85rem;
 }
 .pill {
   display: inline-flex;
@@ -230,7 +227,6 @@ kbd {
 }
 .title-card h1 small {
   display: block;
-  font-size: 0.42em;
   color: var(--red);
   margin-top: 0.35em;
   letter-spacing: 0.06em;
@@ -254,12 +250,10 @@ kbd {
   border: 2px solid var(--line);
   border-radius: 14px;
   padding: 10px 12px;
-  font-size: 0.9rem;
   font-weight: 700;
 }
 .how b {
   display: block;
-  font-size: 1.4rem;
   line-height: 1.2;
 }
 @media (max-width: 560px) {
@@ -358,7 +352,6 @@ kbd {
 .map-help {
   color: var(--muted);
   font-weight: 700;
-  font-size: 0.9rem;
   margin: 0.8em 0.2em 0;
 }
 .talk-btn {
@@ -407,7 +400,6 @@ kbd {
 }
 .side-card h3 {
   margin: 0 0 0.3em;
-  font-size: 1rem;
 }
 .side-card p {
   margin: 0 0 0.6em;
@@ -452,7 +444,6 @@ kbd {
   height: 58px;
 }
 .lc-stall {
-  font-size: 0.8rem;
   font-weight: 800;
   color: var(--muted);
 }
@@ -461,7 +452,6 @@ kbd {
   line-height: 1.2;
 }
 .lc-npc {
-  font-size: 0.85rem;
   font-weight: 700;
   color: var(--green);
 }
@@ -478,7 +468,6 @@ kbd {
   grid-row: span 2;
 }
 .badge {
-  font-size: 0.72rem;
   font-weight: 900;
   border-radius: 999px;
   padding: 0.1em 0.6em;
@@ -496,7 +485,6 @@ kbd {
 .stars {
   color: #c8c0ad;
   letter-spacing: 1px;
-  font-size: 1rem;
   white-space: nowrap;
 }
 .stars .on {
@@ -526,7 +514,6 @@ kbd {
 }
 .lb-stall {
   font-weight: 800;
-  font-size: 0.85rem;
   opacity: 0.9;
 }
 .lb-title {
@@ -606,9 +593,6 @@ kbd {
 .npc-card .portrait {
   background: #bfe3d2;
 }
-.who {
-  font-size: 0.95rem;
-}
 .who span {
   color: var(--muted);
   font-weight: 700;
@@ -646,12 +630,10 @@ kbd {
   }
 }
 .craving {
-  font-size: 0.8rem;
   font-weight: 900;
   color: var(--red);
 }
 .quote {
-  font-size: 1.14rem;
   font-weight: 800;
   margin: 0.35em 0 0;
   line-height: 1.35;
@@ -688,13 +670,9 @@ kbd {
 }
 .slot small {
   display: block;
-  font-size: 0.7rem;
   font-weight: 800;
   color: var(--cc);
   line-height: 1.2;
-}
-.slot b {
-  font-size: 0.95rem;
 }
 .slot.filled {
   border-style: solid;
@@ -733,7 +711,6 @@ kbd {
 .tok {
   font-family: var(--font-d);
   font-weight: 400;
-  font-size: 1.35rem;
   background: var(--panel);
   border: 2.5px solid var(--cc);
   border-radius: 12px;
@@ -745,7 +722,6 @@ kbd {
 }
 .tok span {
   font-family: var(--font-b);
-  font-size: 0.8rem;
   color: var(--muted);
 }
 .say {
@@ -772,7 +748,6 @@ kbd {
   height: 120px;
 }
 .caption {
-  font-size: 0.8rem;
   font-weight: 800;
   text-align: center;
   color: #1e2a24;
@@ -784,7 +759,6 @@ kbd {
   justify-content: center;
   margin-top: 4px;
   align-items: center;
-  font-size: 0.7rem;
   font-weight: 800;
   color: #1e2a24;
 }
@@ -799,7 +773,6 @@ kbd {
   background: #1e2a24;
 }
 .chips-label {
-  font-size: 0.85rem;
   font-weight: 800;
   color: var(--muted);
   margin: 14px 0 8px;
@@ -827,14 +800,12 @@ kbd {
 }
 .chip small {
   display: block;
-  font-size: 0.66rem;
   font-weight: 900;
   color: var(--cc);
   line-height: 1.1;
 }
 .chip span {
   font-family: var(--font-d);
-  font-size: 1.15rem;
   line-height: 1.2;
 }
 .chip:active {
@@ -877,7 +848,6 @@ kbd {
   color: var(--panel);
   border-radius: 12px;
   padding: 9px 12px;
-  font-size: 0.88rem;
   line-height: 1.35;
   pointer-events: none;
   opacity: 0;
@@ -894,7 +864,6 @@ kbd {
 #tooltip b {
   font-family: var(--font-d);
   font-weight: 400;
-  font-size: 1rem;
   margin-right: 0.3em;
 }
 #tooltip em {
@@ -1011,7 +980,6 @@ kbd {
 .said {
   font-family: var(--font-d);
   font-weight: 400;
-  font-size: 1.3rem;
   line-height: 1.2;
 }
 .breakdown {
@@ -1031,7 +999,6 @@ kbd {
   white-space: nowrap;
 }
 .bd {
-  font-size: 0.85rem;
   font-weight: 700;
   background: var(--panel2);
   border: 2px solid var(--line);
@@ -1043,7 +1010,6 @@ kbd {
 }
 .pts {
   font-family: var(--font-d);
-  font-size: 1.2rem;
   margin: 0.4em 0 0.9em;
 }
 .pts .st {
@@ -1055,7 +1021,6 @@ kbd {
   border-radius: 12px;
   padding: 8px 12px;
   font-weight: 700;
-  font-size: 0.92rem;
   text-align: left;
 }
 .compare {
@@ -1148,14 +1113,12 @@ kbd {
   display: block;
   font-weight: 900;
   color: var(--cc);
-  font-size: 0.75rem;
 }
 .fslot .mini {
   margin: 2px 2px 0 0;
 }
 .blank {
   display: block;
-  font-size: 0.75rem;
   color: var(--muted);
   font-weight: 700;
   margin-top: 3px;
@@ -1191,7 +1154,6 @@ kbd {
 .gloss-table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 0.9rem;
 }
 .gloss-table td {
   border-top: 2px solid var(--line);
@@ -1206,7 +1168,6 @@ kbd {
   font-weight: 600;
 }
 .bigstars {
-  font-size: 3rem;
   letter-spacing: 6px;
   color: #d7d0bd;
   margin: 0.1em 0;
