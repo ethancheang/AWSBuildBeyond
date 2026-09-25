@@ -1,5 +1,5 @@
 import { $ } from '../shared/dom.js';
-import { GLOSS } from '../content/lessons.js';
+import { GLOSS } from '../content/lessons.ts';
 let toastT;
 function toast(msg) {
   const t = $('#toast');
@@ -11,12 +11,22 @@ function toast(msg) {
 
 let modalOpen = false,
   modalActs = {};
+let previousFocus;
 function openModal(html, acts = {}) {
   hideTip();
+  if (!modalOpen) previousFocus = document.activeElement;
   $('#sheet').innerHTML = html;
   modalActs = acts;
   modalOpen = true;
   $('#modal').hidden = false;
+  document.querySelectorAll('.screen').forEach((screen) => {
+    screen.inert = true;
+  });
+  const title = $('#sheet h2');
+  if (title) {
+    title.id = 'dialogTitle';
+    $('#sheet').setAttribute('aria-labelledby', title.id);
+  }
   const f = $('#sheet [data-primary]') || $('#sheet button');
   if (f) setTimeout(() => f.focus({ preventScroll: true }), 30);
 }
@@ -24,7 +34,29 @@ function closeModal() {
   $('#modal').hidden = true;
   modalOpen = false;
   modalActs = {};
+  document.querySelectorAll('.screen').forEach((screen) => {
+    screen.inert = false;
+  });
+  if (previousFocus?.isConnected && previousFocus.getClientRects().length)
+    previousFocus.focus({ preventScroll: true });
 }
+$('#sheet').addEventListener('keydown', (event) => {
+  if (event.key !== 'Tab') return;
+  const controls = [
+    ...$('#sheet').querySelectorAll(
+      'button:not(:disabled), a[href], input, [tabindex="0"]',
+    ),
+  ];
+  const first = controls[0],
+    last = controls.at(-1);
+  if (event.shiftKey && document.activeElement === first) {
+    event.preventDefault();
+    last?.focus();
+  } else if (!event.shiftKey && document.activeElement === last) {
+    event.preventDefault();
+    first?.focus();
+  }
+});
 $('#sheet').addEventListener('click', (e) => {
   const b = e.target.closest('[data-act]');
   if (b && modalActs[b.dataset.act]) modalActs[b.dataset.act]();

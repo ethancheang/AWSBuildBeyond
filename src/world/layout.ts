@@ -20,8 +20,9 @@ export const TABLE_POSITIONS: Point[] = [
 export const BOUNDS = { minX: -12, maxX: 12, minZ: -4.7, maxZ: 10 };
 // Radii include the player's clearance and the stools around each table.
 export const OBSTACLES: Obstacle[] = [
-  ...TABLE_POSITIONS.map((p) => ({ ...p, radius: 2.25 })),
+  ...TABLE_POSITIONS.map((p) => ({ ...p, radius: 2.4 })),
   { x: 0, z: 2.7, radius: 1.65 },
+  ...[-12, 12].flatMap((x) => [-3, 8].map((z) => ({ x, z, radius: 0.8 }))),
 ];
 
 export function isWalkable(p: Point): boolean {

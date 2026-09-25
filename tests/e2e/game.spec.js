@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { LEVELS } from '../../src/content/lessons.js';
+import { LEVELS } from '../../src/content/lessons.ts';
 
 async function enter(page, direct = true) {
   await page.goto('/');

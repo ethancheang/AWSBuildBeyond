@@ -1,8 +1,9 @@
+import { feedbackNotes } from '../ui/feedback.js';
 import { $, $$, shuffle, pick } from '../shared/dom.js';
-import { LEVELS, GLOSS, CATS, NASI_BASE } from '../content/lessons.js';
+import { LEVELS, GLOSS, CATS, NASI_BASE } from '../content/lessons.ts';
 import { avatarSVG } from '../art/avatar.js';
 import { artFor, infoFor, nasiSVG } from '../art/food.js';
-import { save, persist, levelSave } from '../state/progress.js';
+import { save, persist, levelSave } from '../state/progress.ts';
 import { SFX } from '../audio/sound.js';
 import { catColor, tag, phrase, starsHTML } from '../ui/format.js';
 import {
@@ -12,7 +13,8 @@ import {
   showTip,
   hideTip,
 } from '../ui/overlays.js';
-import { evaluate, nasiCheck } from '../domain/evaluation.js';
+import { evaluate, nasiCheck } from '../domain/evaluation.ts';
+import { scoreOrder, lessonStars } from '../domain/scoring.ts';
 export function createLessons({ show, backToHub, onEnter }) {
   function nasiStage() {
     return L.lv.prompts[L.idx].stages[L.stage];
@@ -57,8 +59,7 @@ export function createLessons({ show, backToHub, onEnter }) {
       nasiTurn();
       return;
     }
-    const star = !L.tries && !L.hinted,
-      pts = L.tries ? 40 : star ? 100 : 60;
+    const { star, points: pts } = scoreOrder(L.tries, L.hinted);
     L.score += pts;
     if (star) L.perfect++;
     L.results[L.idx] = star ? 'star' : 'ok';
@@ -70,7 +71,7 @@ export function createLessons({ show, backToHub, onEnter }) {
       else nextPrompt();
     };
     openModal(
-      `<div class="center"><div class="served">${nasiSVG(L.accepted)}</div><h2>Swee! Order coming right up!</h2><p>Kak Aisyah: “Your meal is ready. Enjoy!”</p><p>${L.accepted.map((t) => GLOSS[t].short).join(' · ')}</p><div class="pts">+${pts} pts ${star ? '★ perfect' : ''}</div><p>Say thank you: <b>Terima kasih</b>. This does not affect your score.</p><div class="row-btns"><button class="btn primary" data-act="thanks" data-primary>Terima kasih — Thank you</button><button class="btn ghost" data-act="next">${L.idx === 5 ? 'Finish lesson' : 'Next customer'}</button></div></div>`,
+      `<div class="center"><div class="served">${nasiSVG(L.accepted)}</div><h2>Swee! Order coming right up!</h2><p>Kak Aisyah: “Your meal is ready. Enjoy!”</p><p>${L.accepted.map((t) => GLOSS[t].short).join(' · ')}</p><div class="pts">+${pts} pts ${star ? '★ perfect' : ''}</div><p>Say thank you: <b>Terima kasih</b>. This does not affect your score.</p><div class="row-btns"><button class="btn primary" data-act="thanks" data-primary>Terima kasih — Thank you</button><button class="btn ghost" data-act="next">${L.idx === L.lv.prompts.length - 1 ? 'Finish lesson' : 'Next customer'}</button></div></div>`,
       { thanks: next, next, close: next },
     );
   }
@@ -358,7 +359,7 @@ export function createLessons({ show, backToHub, onEnter }) {
       nasiSubmit();
       return;
     }
-    const r = evaluate(L.tokens, p.a, lv);
+    const r = evaluate(L.tokens, p.a);
     const isLast = L.idx === lv.prompts.length - 1;
     if (r.type === 'wrong') {
       L.tries++;
@@ -371,15 +372,20 @@ export function createLessons({ show, backToHub, onEnter }) {
       <p class="npc-say"><b>${lv.npc}:</b> “${comfort}”</p>
       <div class="compare"><div class="you"><small>You said</small><div class="said">“${phrase(L.tokens)}”</div></div>
       <div class="right"><small>Say this instead</small><div class="said">“${phrase(p.a)}”</div></div></div>
-      <ul class="notes">${r.notes.map((n) => `<li>${n}</li>`).join('')}</ul>
+      <ul class="notes">${feedbackNotes(L.tokens, p.a, lv)
+        .map((n) => `<li>${n}</li>`)
+        .join('')}</ul>
       <div class="row-btns"><button class="btn primary" data-act="retry" data-primary>Try again</button></div></div>`,
         { retry: retry, close: retry },
       );
       return;
     }
     const first = L.tries === 0;
-    const star = first && !L.hinted && r.type === 'perfect';
-    const pts = !first ? 40 : star ? 100 : 60;
+    const { star, points: pts } = scoreOrder(
+      L.tries,
+      L.hinted,
+      r.type === 'perfect',
+    );
     L.score += pts;
     if (star) L.perfect++;
     L.results[L.idx] = star ? 'star' : 'ok';
@@ -427,7 +433,7 @@ export function createLessons({ show, backToHub, onEnter }) {
     const lv = L.lv,
       n = lv.prompts.length,
       p = L.perfect;
-    const stars = p === n ? 3 : p >= n - 2 ? 2 : 1;
+    const stars = lessonStars(p, n);
     const prev = levelSave(lv.id);
     save.levels[lv.id] = {
       done: true,

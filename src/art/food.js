@@ -1,5 +1,5 @@
 import { uid } from '../shared/dom.js';
-import { GLOSS } from '../content/lessons.js';
+import { GLOSS } from '../content/lessons.ts';
 function nasiSVG(tokens) {
   const has = (t) => tokens.includes(t),
     packed = has('Bungkus'),

@@ -1,29 +1,6 @@
-import { GLOSS, CATS } from '../content/lessons.js';
-import { tag } from '../ui/format.js';
-function nasiCheck(tokens, expected) {
-  const norm = (ts) =>
-    ts
-      .filter((t) => !['Kak', 'Saya nak'].includes(t))
-      .map((t) => (t === 'Satu nasi lemak' ? 'Nasi lemak satu' : t));
-  const actual = norm(tokens),
-    answer = norm(expected);
-  return (
-    actual.length === answer.length &&
-    new Set(actual).size === actual.length &&
-    answer.every((t) => actual.includes(t))
-  );
-}
-function evaluate(tokens, answer, lv) {
-  if (
-    tokens.length === answer.length &&
-    tokens.every((t, i) => t === answer[i])
-  )
-    return { type: 'perfect' };
-  if (
-    tokens.length === answer.length &&
-    answer.every((a) => tokens.includes(a))
-  )
-    return { type: 'order' };
+import { GLOSS, CATS } from '../content/lessons.ts';
+import { tag } from './format.js';
+export function feedbackNotes(tokens, answer, lv) {
   const catOf = (t) =>
     lv.slots.includes(GLOSS[t].cat) ? GLOSS[t].cat : 'stray';
   const low = (t) =>
@@ -59,7 +36,5 @@ function evaluate(tokens, answer, lv) {
     .forEach((w) =>
       notes.push(GLOSS[w].stray || `${tag(w)} doesn’t belong in this order.`),
     );
-  return { type: 'wrong', notes };
+  return notes;
 }
-
-export { evaluate, nasiCheck };

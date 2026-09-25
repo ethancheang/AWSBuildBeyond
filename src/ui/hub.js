@@ -1,7 +1,7 @@
 import { $, $$, pick } from '../shared/dom.js';
-import { LEVELS, HUB_TIPS } from '../content/lessons.js';
+import { LEVELS, HUB_TIPS } from '../content/lessons.ts';
 import { artFor } from '../art/food.js';
-import { save, levelSave } from '../state/progress.js';
+import { save, levelSave } from '../state/progress.ts';
 import { starsHTML } from './format.js';
 import { modalOpen, toast } from './overlays.js';
 

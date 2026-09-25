@@ -1,4 +1,11 @@
-const CATS = {
+import type {
+  Avatar,
+  Category,
+  Term,
+  Lesson,
+  ConversationStage,
+} from './types';
+const CATS: Record<string, Category> = {
   base: { label: 'Drink', color: '#8b5a2b' },
   milk: { label: 'Milk', color: '#c98a1b' },
   sugar: { label: 'Sugar', color: '#d6457f' },
@@ -8,7 +15,7 @@ const CATS = {
   chili: { label: 'Chili', color: '#e04b3a' },
 };
 
-const GLOSS = {
+const GLOSS: Record<string, Term> = {
   Kopi: {
     cat: 'base',
     short: 'Coffee',
@@ -93,7 +100,7 @@ const GLOSS = {
 };
 
 /* avatar presets */
-const AV = {
+const AV: Record<string, Avatar> = {
   lim: {
     skin: '#e7b58c',
     hair: '#8f8f8f',
@@ -111,7 +118,7 @@ const AV = {
   },
 };
 
-const LEVELS = [
+const LEVELS: Lesson[] = [
   {
     id: 'drinks',
     kind: 'drink',
@@ -414,7 +421,7 @@ Object.assign(CATS, {
   dining: { label: 'Eat here / takeaway', color: '#367aac' },
   polite: { label: 'Conversation', color: '#9766ac' },
 });
-const MALAY_TERMS = [
+const MALAY_TERMS: [string, string, string, string][] = [
   [
     'Kak',
     'polite',
@@ -505,7 +512,7 @@ MALAY_TERMS.forEach(
 );
 const NASI_BASE =
   'This stall’s basic set: coconut rice, half a boiled egg, cucumber, peanuts and ikan bilis (anchovies). Sambal is chosen separately. Other stalls may serve different sets.';
-const nasiOrder = (chicken) => ({
+const nasiOrder = (chicken: boolean): ConversationStage => ({
   q: 'Nak makan apa? — What would you like?',
   a: ['Nasi lemak satu', ...(chicken ? ['Ayam goreng'] : [])],
   chips: [
@@ -521,17 +528,17 @@ const nasiEgg = {
   a: ['Tambah telur satu'],
   chips: ['Tambah telur satu', 'Tak nak telur tambahan'],
 };
-const nasiSambal = (term) => ({
+const nasiSambal = (term: string): ConversationStage => ({
   q: 'Sambal macam mana? — How would you like the sambal?',
   a: [term],
   chips: ['Sambal biasa', 'Sambal sikit', 'Tak nak sambal', 'Sambal asing'],
 });
-const nasiDining = (term) => ({
+const nasiDining = (term: string): ConversationStage => ({
   q: 'Makan sini atau bungkus? — Eating here or takeaway?',
   a: [term],
   chips: ['Makan sini', 'Bungkus'],
 });
-const nasiScenarios = [
+const nasiScenarios: [string, string, boolean, boolean, string, string][] = [
   [
     'A first visit',
     'One basic nasi lemak, regular sambal, no extra egg. Eat here.',

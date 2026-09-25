@@ -401,6 +401,12 @@ kbd {
   font-size: 1.1rem;
   font-weight: 900;
 }
+.chip small,
+.slot small,
+.fslot > small,
+.bd b {
+  color: var(--ink);
+}
 .tok {
   font-family: var(--font-b);
   font-size: 1.2rem;
@@ -535,5 +541,48 @@ kbd {
     white-space: normal;
     width: max-content;
     text-align: center;
+  }
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    --bg: #17231e;
+    --panel: #213128;
+    --panel2: #2d3d31;
+    --ink: #f0f1e6;
+    --muted: #b1bcae;
+    --line: #425141;
+    --edge: #425141;
+    --green: #a5c29b;
+    --good: #8dc89c;
+    --warn: #f6a689;
+  }
+  .btn.primary:hover {
+    background: #bdd6b3;
+  }
+  .btn.primary,
+  .talk-btn {
+    color: #193323;
+  }
+  .brand-badge,
+  .pill {
+    background: var(--panel2);
+  }
+  .lc-icon,
+  .badge {
+    background: #d9d3b6;
+    color: #263d32;
+  }
+  .badge.b-done {
+    background: #a5c29b;
+    color: #193323;
+  }
+  .world-toolbar,
+  .dots,
+  .bigstars {
+    color: #273e35;
+  }
+  #title.active {
+    background: radial-gradient(ellipse at 50% 30%, #2c4432, transparent 65%);
   }
 }

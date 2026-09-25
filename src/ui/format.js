@@ -1,4 +1,4 @@
-import { CATS, GLOSS } from '../content/lessons.js';
+import { CATS, GLOSS } from '../content/lessons.ts';
 const catColor = (t) => CATS[GLOSS[t].cat].color;
 const tag = (t) => `<span class="mini" style="--cc:${catColor(t)}">${t}</span>`;
 const phrase = (tokens) => tokens.join(' ');

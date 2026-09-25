@@ -1,8 +1,12 @@
+import '@fontsource/nunito/latin-600.css';
+import '@fontsource/nunito/latin-700.css';
+import '@fontsource/nunito/latin-800.css';
+import '@fontsource/nunito/latin-900.css';
 import './styles/base.css';
 import './styles/experience.css';
 import { $, $$ } from './shared/dom.js';
 import { drinkSVG, noodleSVG } from './art/food.js';
-import { save, persist } from './state/progress.js';
+import { save, persist } from './state/progress.ts';
 import { beep, SFX } from './audio/sound.js';
 import {
   modalOpen,

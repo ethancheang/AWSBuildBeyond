@@ -1,4 +1,4 @@
-import { save } from '../state/progress.js';
+import { save } from '../state/progress.ts';
 let actx = null;
 function beep(freqs, dur = 0.09, type = 'triangle', gap = 0.07, vol = 0.07) {
   if (!save.sound) return;

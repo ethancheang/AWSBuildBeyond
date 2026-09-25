@@ -229,7 +229,13 @@ export function createWorld(options: WorldOptions) {
     if (!width || !height || disposed) return;
     camera.aspect = width / height;
     // Preserve a useful horizontal overview on a narrow phone screen.
-    camera.fov = THREE.MathUtils.radToDeg(2 * Math.atan(Math.tan(THREE.MathUtils.degToRad(43) / 2) * Math.max(1, 1.35 / camera.aspect)));
+    camera.fov = THREE.MathUtils.radToDeg(
+      2 *
+        Math.atan(
+          Math.tan(THREE.MathUtils.degToRad(43) / 2) *
+            Math.max(1, 1.35 / camera.aspect),
+        ),
+    );
     camera.updateProjectionMatrix();
     renderer.setSize(width, height);
   });

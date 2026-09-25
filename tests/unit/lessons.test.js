@@ -1,6 +1,7 @@
+import { feedbackNotes } from '../../src/ui/feedback.js';
 import { describe, expect, it } from 'vitest';
-import { LEVELS, GLOSS, CATS } from '../../src/content/lessons.js';
-import { evaluate, nasiCheck } from '../../src/domain/evaluation.js';
+import { LEVELS, GLOSS, CATS } from '../../src/content/lessons.ts';
+import { evaluate, nasiCheck } from '../../src/domain/evaluation.ts';
 
 describe('original lesson coverage', () => {
   it('retains all three stalls and eighteen customers', () => {
@@ -27,7 +28,7 @@ describe('original lesson coverage', () => {
             );
           }
         } else {
-          expect(evaluate(prompt.a, prompt.a, level).type).toBe('perfect');
+          expect(evaluate(prompt.a, prompt.a).type).toBe('perfect');
         }
       }
     });
@@ -37,15 +38,15 @@ describe('original lesson coverage', () => {
 describe('ordering feedback', () => {
   const drinks = LEVELS[0];
   it('accepts reordered words with guidance but no perfect score', () => {
-    expect(
-      evaluate(['Peng', 'O', 'Kopi'], ['Kopi', 'O', 'Peng'], drinks).type,
-    ).toBe('order');
+    expect(evaluate(['Peng', 'O', 'Kopi'], ['Kopi', 'O', 'Peng']).type).toBe(
+      'order',
+    );
   });
   it('explains missing words and unwanted defaults', () => {
-    expect(evaluate(['Kopi'], ['Kopi', 'O'], drinks).notes.join(' ')).toContain(
+    expect(feedbackNotes(['Kopi'], ['Kopi', 'O'], drinks).join(' ')).toContain(
       'Missing',
     );
-    expect(evaluate(['Kopi', 'O'], ['Kopi'], drinks).notes.join(' ')).toContain(
+    expect(feedbackNotes(['Kopi', 'O'], ['Kopi'], drinks).join(' ')).toContain(
       'Not needed',
     );
   });
@@ -53,10 +54,15 @@ describe('ordering feedback', () => {
     const result = evaluate(
       ['Mee Pok', 'Dry', 'Chili', 'Peng'],
       ['Mee Pok', 'Dry', 'Chili'],
-      LEVELS[1],
     );
     expect(result.type).toBe('wrong');
-    expect(result.notes.join(' ')).toContain('drink lingo');
+    expect(
+      feedbackNotes(
+        ['Mee Pok', 'Dry', 'Chili', 'Peng'],
+        ['Mee Pok', 'Dry', 'Chili'],
+        LEVELS[1],
+      ).join(' '),
+    ).toContain('drink lingo');
   });
   it('accepts Malay word-order variants and optional greetings', () => {
     expect(
