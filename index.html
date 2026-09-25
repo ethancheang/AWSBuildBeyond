@@ -1,0 +1,220 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, viewport-fit=cover"
+    />
+    <title>Kopi That! · Learn the lingo. Nail the order.</title>
+    <meta
+      name="description"
+      content="Explore a 3D Singapore hawker centre and learn to order kopi, fishball noodles and nasi lemak through playful, guided conversations."
+    />
+  </head>
+  <body>
+    <div id="world" aria-label="Singapore hawker centre">
+      <p id="worldStatus" role="status">Getting the stalls ready…</p>
+    </div>
+    <section id="title" class="screen active" aria-label="Title screen">
+      <div class="title-card">
+        <p class="eyebrow">SINGAPORE · COME IN, MAKAN</p>
+        <h1>Kopi That!</h1>
+        <p class="title-tagline">Learn the lingo. Nail the order.</p>
+        <p class="lede">
+          A seat at the table. A word with the hawker.<br />Find your voice in
+          Singapore, one order at a time.
+        </p>
+        <button class="btn primary" id="startBtn">
+          Let's makan <span aria-hidden="true">↗</span>
+        </button>
+        <p class="title-footnote">
+          8 stalls to discover · 3 lessons to savour · 18 customers
+        </p>
+      </div>
+    </section>
+    <section
+      id="hub"
+      data-camera="follow"
+      class="screen"
+      aria-label="Lau Pa Sat-inspired hawker centre"
+    >
+      <header class="topbar">
+        <div class="brand">
+          <span class="brand-badge" aria-hidden="true">☕</span>
+          <div>
+            <b>Kopi That!</b><small>Learn the lingo. Nail the order.</small>
+          </div>
+        </div>
+        <div class="top-actions">
+          <span class="pill" id="hubStars">★ 0/9</span
+          ><span class="pill" id="hubPts">0 pts</span>
+          <button class="icon-btn" id="glossBtn" aria-label="Lingo guide">
+            ▤ <span class="hide-sm">Lingo guide</span>
+          </button>
+          <button class="icon-btn" id="soundBtn" aria-label="Toggle sound">
+            ♫
+          </button>
+        </div>
+      </header>
+      <div class="hub-heading">
+        <p class="eyebrow">LAU PA SAT, REIMAGINED</p>
+        <h1>Under one roof.</h1>
+        <p>Eight stalls. A whole lot of local.</p>
+        <span id="worldMode"><i></i> EXPLORE THE CENTRE</span>
+      </div>
+      <div class="world-toolbar" aria-label="Camera controls">
+        <div class="view-switch">
+          <button id="followViewBtn" aria-pressed="true">Follow</button
+          ><button id="hallViewBtn" aria-pressed="false">Hall view</button
+          ><button id="floorViewBtn" aria-pressed="false">Floor plan</button>
+        </div>
+        <button
+          id="cameraBtn"
+          class="icon-btn"
+          aria-label="Reset follow camera"
+        >
+          ↺
+        </button>
+      </div>
+      <button
+        id="hawkersToggle"
+        class="panel-toggle"
+        aria-expanded="true"
+        aria-controls="hawkerPanel"
+      >
+        Meet your hawkers <span>03</span>
+      </button>
+      <aside
+        class="side hud-panel"
+        id="hawkerPanel"
+        aria-label="Meet your hawkers"
+      >
+        <div class="panel-heading">
+          <div>
+            <p class="eyebrow">THREE WAYS TO SAY SHIOK</p>
+            <h2>Meet your hawkers</h2>
+          </div>
+          <button
+            class="close-panel"
+            id="closeHawkers"
+            aria-label="Close hawker panel"
+          >
+            ×
+          </button>
+        </div>
+        <p class="side-intro">Pick a stall. We'll walk you there.</p>
+        <div id="lessonList"></div>
+        <label class="direct-option"
+          ><input type="checkbox" id="directLessons" /> Skip the walk, start
+          lessons directly</label
+        >
+        <div id="gradBanner"></div>
+        <details class="neighbours">
+          <summary>Next on the menu <span>05</span></summary>
+          <p>Our neighbours are setting up. Lessons coming later.</p>
+          <ul id="placeholderList"></ul>
+        </details>
+        <div class="local-tip">
+          <h3>A little local knowledge</h3>
+          <p id="hubTip"></p>
+          <button class="link-btn" id="resetBtn">Reset progress</button>
+        </div>
+      </aside>
+      <button id="talkBtn" class="talk-btn" hidden></button>
+      <footer class="map-help" id="worldHelp">
+        <span><kbd>WASD</kbd> Walk</span
+        ><span><kbd>E</kbd> / <kbd>Enter</kbd> Talk</span
+        ><span class="hide-sm"
+          >Click to walk · Drag to look · Scroll to zoom</span
+        ><span class="touch-help"
+          >Tap to walk · Drag to look · Pinch to zoom</span
+        >
+      </footer>
+      <div class="venue-stamp" aria-hidden="true">
+        ONE LITTLE RED DOT.<br /><b>A WORLD OF FLAVOUR.</b>
+      </div>
+    </section>
+    <noscript
+      ><p class="card">
+        Kopi That! needs JavaScript for its interactive lessons. Please enable
+        it and reload.
+      </p></noscript
+    >
+
+    <!-- ============ LESSON ============ -->
+    <section id="lesson" class="screen" aria-label="Ordering lesson">
+      <header class="topbar lesson-bar">
+        <button class="icon-btn" id="backBtn">Back to hub</button>
+        <div class="lb-meta">
+          <div class="lb-stall" id="lbStall"></div>
+          <div class="lb-title" id="lbTitle"></div>
+        </div>
+        <div class="lb-stats">
+          <span class="pill" id="lbCount"></span
+          ><span class="pill" id="lbScore"></span
+          ><button class="icon-btn" id="lbGloss" aria-label="Lingo guide">
+            📖
+          </button>
+        </div>
+      </header>
+      <div class="lesson-wrap">
+        <div class="dots" id="dots" aria-hidden="true"></div>
+        <div class="scene">
+          <div class="card npc-card">
+            <div class="portrait" id="npcPortrait"></div>
+            <div style="flex: 1">
+              <div class="who">
+                <b id="npcName"></b> <span id="npcRole"></span>
+              </div>
+              <div class="bubble" id="npcBubble" aria-live="polite"></div>
+            </div>
+          </div>
+          <div class="card cust-card" id="custCard">
+            <div class="portrait small" id="custPortrait"></div>
+            <div>
+              <div class="craving">Customer craving</div>
+              <div class="who">
+                <b id="custName"></b> <span id="custTag"></span>
+              </div>
+              <p class="quote" id="custQuote"></p>
+            </div>
+          </div>
+        </div>
+        <div class="card order-panel">
+          <div class="slots" id="slots"></div>
+          <div class="order-row">
+            <div>
+              <div class="phrase" id="phrase" aria-live="polite"></div>
+              <div class="say" id="sayLine"></div>
+            </div>
+            <div class="preview" aria-hidden="true">
+              <div id="previewArt"></div>
+              <div class="caption" id="previewCap"></div>
+              <div id="previewSweet"></div>
+            </div>
+          </div>
+          <div class="chips-label">
+            Tap chips in the order you'd say them. Hover or long-press a chip
+            for its meaning.
+          </div>
+          <div class="chips" id="chips"></div>
+          <div class="actions">
+            <button class="btn ghost" id="undoBtn">↶ Undo</button>
+            <button class="btn ghost" id="clearBtn">Clear</button>
+            <button class="btn ghost" id="hintBtn">💡 Hint</button>
+            <button class="btn primary" id="orderBtn">Place order</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <div class="overlay" id="modal" hidden>
+      <div class="sheet" id="sheet" role="dialog" aria-modal="true"></div>
+    </div>
+    <div id="tooltip" role="tooltip"></div>
+    <div id="toast" role="status"></div>
+
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>
