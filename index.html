@@ -1,0 +1,168 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, viewport-fit=cover"
+    />
+    <title>Hawker Lingo Simulator: Maxwell Food Centre</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Bungee&family=Nunito:wght@500;700;800;900&display=swap"
+      rel="stylesheet"
+    />
+  </head>
+  <body>
+    <!-- ============ TITLE ============ -->
+    <section id="title" class="screen active" aria-label="Title screen">
+      <div class="card title-card">
+        <div class="bunting" id="bunting" aria-hidden="true"></div>
+        <div class="hero-art" id="heroArt" aria-hidden="true"></div>
+        <h1>Hawker Lingo Simulator<small>Maxwell Food Centre</small></h1>
+        <p class="lede">
+          Walk the hawker centre, meet the uncle and auntie behind the counter,
+          and learn to order kopi, fishball noodles and nasi lemak like a local.
+        </p>
+        <div class="how">
+          <div><b>🚶</b>Walk up to a stall and talk to the hawker</div>
+          <div><b>🗣️</b>Read what the customer is craving</div>
+          <div><b>🧩</b>Tap lingo chips in order to build the order</div>
+        </div>
+        <button
+          class="btn primary"
+          id="startBtn"
+          style="font-size: 1.1rem; padding: 0.7em 1.6em"
+        >
+          Enter Maxwell
+        </button>
+      </div>
+    </section>
+
+    <!-- ============ HUB ============ -->
+    <section id="hub" class="screen" aria-label="Maxwell Food Centre hub">
+      <header class="topbar">
+        <div class="brand">
+          <span class="brand-badge" aria-hidden="true">☕</span>
+          <div><b>Hawker Lingo</b><small>Maxwell Food Centre</small></div>
+        </div>
+        <div class="top-actions">
+          <span class="pill" id="hubStars">★ 0/9</span>
+          <span class="pill" id="hubPts">0 pts</span>
+          <button class="icon-btn" id="glossBtn">
+            📖 <span class="hide-sm">Lingo guide</span>
+          </button>
+          <button class="icon-btn" id="soundBtn" aria-label="Toggle sound">
+            🔊
+          </button>
+        </div>
+      </header>
+      <div class="hub-body">
+        <div class="map-col">
+          <div class="map-wrap">
+            <svg
+              id="map"
+              viewBox="0 0 800 540"
+              role="img"
+              aria-label="Top-down map of Maxwell Food Centre with three stalls"
+            ></svg>
+            <button id="talkBtn" class="talk-btn" hidden></button>
+          </div>
+          <p class="map-help">
+            Click the floor, or use <kbd>WASD</kbd> / arrow keys, to walk. Step
+            onto an <b>Order here</b> mat and press <kbd>Enter</kbd> to talk to
+            the hawker.
+          </p>
+        </div>
+        <aside class="side">
+          <div class="card side-card">
+            <h2>Find a lesson</h2>
+            <div id="lessonList"></div>
+          </div>
+          <div id="gradBanner"></div>
+          <div class="card side-card">
+            <h3>Hawker tip</h3>
+            <p id="hubTip"></p>
+            <button class="link-btn" id="resetBtn">Reset progress</button>
+          </div>
+        </aside>
+      </div>
+    </section>
+
+    <!-- ============ LESSON ============ -->
+    <section id="lesson" class="screen" aria-label="Ordering lesson">
+      <header class="topbar lesson-bar">
+        <button class="icon-btn" id="backBtn">Back to hub</button>
+        <div class="lb-meta">
+          <div class="lb-stall" id="lbStall"></div>
+          <div class="lb-title" id="lbTitle"></div>
+        </div>
+        <div class="lb-stats">
+          <span class="pill" id="lbCount"></span
+          ><span class="pill" id="lbScore"></span
+          ><button class="icon-btn" id="lbGloss" aria-label="Lingo guide">
+            📖
+          </button>
+        </div>
+      </header>
+      <div class="lesson-wrap">
+        <div class="dots" id="dots" aria-hidden="true"></div>
+        <div class="scene">
+          <div class="card npc-card">
+            <div class="portrait" id="npcPortrait"></div>
+            <div style="flex: 1">
+              <div class="who">
+                <b id="npcName"></b> <span id="npcRole"></span>
+              </div>
+              <div class="bubble" id="npcBubble" aria-live="polite"></div>
+            </div>
+          </div>
+          <div class="card cust-card" id="custCard">
+            <div class="portrait small" id="custPortrait"></div>
+            <div>
+              <div class="craving">Customer craving</div>
+              <div class="who">
+                <b id="custName"></b> <span id="custTag"></span>
+              </div>
+              <p class="quote" id="custQuote"></p>
+            </div>
+          </div>
+        </div>
+        <div class="card order-panel">
+          <div class="slots" id="slots"></div>
+          <div class="order-row">
+            <div>
+              <div class="phrase" id="phrase" aria-live="polite"></div>
+              <div class="say" id="sayLine"></div>
+            </div>
+            <div class="preview" aria-hidden="true">
+              <div id="previewArt"></div>
+              <div class="caption" id="previewCap"></div>
+              <div id="previewSweet"></div>
+            </div>
+          </div>
+          <div class="chips-label">
+            Tap chips in the order you'd say them. Hover or long-press a chip
+            for its meaning.
+          </div>
+          <div class="chips" id="chips"></div>
+          <div class="actions">
+            <button class="btn ghost" id="undoBtn">↶ Undo</button>
+            <button class="btn ghost" id="clearBtn">Clear</button>
+            <button class="btn ghost" id="hintBtn">💡 Hint</button>
+            <button class="btn primary" id="orderBtn">Place order</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <div class="overlay" id="modal" hidden>
+      <div class="sheet" id="sheet" role="dialog" aria-modal="true"></div>
+    </div>
+    <div id="tooltip" role="tooltip"></div>
+    <div id="toast" role="status"></div>
+
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>
