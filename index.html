@@ -35,6 +35,7 @@
     </section>
     <section
       id="hub"
+      data-camera="follow"
       class="screen"
       aria-label="Lau Pa Sat-inspired hawker centre"
     >
@@ -64,10 +65,15 @@
       </div>
       <div class="world-toolbar" aria-label="Camera controls">
         <div class="view-switch">
-          <button id="hallViewBtn" aria-pressed="true">Hall view</button
+          <button id="followViewBtn" aria-pressed="true">Follow</button
+          ><button id="hallViewBtn" aria-pressed="false">Hall view</button
           ><button id="floorViewBtn" aria-pressed="false">Floor plan</button>
         </div>
-        <button id="cameraBtn" class="icon-btn" aria-label="Reset camera view">
+        <button
+          id="cameraBtn"
+          class="icon-btn"
+          aria-label="Reset follow camera"
+        >
           ↺
         </button>
       </div>

@@ -1,5 +1,6 @@
 import * as THREE from 'three';
-import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { createCameraRig } from './camera';
+import type { CameraView } from './camera';
 import { buildEnvironment } from './environment';
 import { findPath, moveWithCollision, STALL_POSITIONS, SPAWN } from './layout';
 import type { Point } from './layout';
@@ -16,14 +17,15 @@ export interface WorldOptions {
 export function createWorld(options: WorldOptions) {
   const { container } = options;
   const scene = new THREE.Scene();
-  scene.background = new THREE.Color('#E4DDD1');
-  scene.fog = new THREE.Fog('#E4DDD1', 70, 120);
-  const camera = new THREE.PerspectiveCamera(43, 1, 0.1, 160);
+  scene.background = new THREE.Color('#BFDCE5');
+  scene.fog = new THREE.Fog('#BFDCE5', 90, 185);
+  const camera = new THREE.PerspectiveCamera(58, 1, 0.1, 260);
   const renderer = new THREE.WebGLRenderer({
     antialias: true,
     powerPreference: 'low-power',
   });
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.75));
+  renderer.localClippingEnabled = true;
   renderer.shadowMap.enabled = true;
   renderer.shadowMap.type = THREE.PCFShadowMap;
   renderer.outputColorSpace = THREE.SRGBColorSpace;
@@ -37,34 +39,15 @@ export function createWorld(options: WorldOptions) {
   );
   canvas.setAttribute('aria-describedby', 'worldHelp');
   container.append(canvas);
-  const controls = new OrbitControls(camera, canvas);
-  controls.enableDamping = true;
-  controls.enablePan = false;
-  controls.minDistance = 22;
-  controls.maxDistance = 75;
-  controls.minPolarAngle = 0.45;
-  controls.maxPolarAngle = 1.15;
-  let overhead = false;
-  const resetCamera = () => {
-    overhead = false;
-    controls.minPolarAngle = 0.45;
-    camera.position.set(19, 35, 43);
-    controls.target.set(0, 0, 0);
-    controls.update();
+  const rig = createCameraRig(camera, canvas, SPAWN);
+  const controls = rig.controls;
+  const setView = (view: CameraView) => {
+    if (disposed) return;
+    rig.setView(view, position, environment.player.person.rotation.y);
+    rig.update(0, position, environment.cameraObstacles);
+    render();
   };
-  const setView = (view: 'hall' | 'floor') => {
-    if (view === 'hall') resetCamera();
-    else {
-      overhead = true;
-      camera.position.set(0, 55, 0.1);
-      controls.minPolarAngle = 0.001;
-      controls.target.set(0, 0, 0);
-      controls.update();
-    }
-    if (!overhead) controls.minPolarAngle = 0.45;
-    renderer.render(scene, camera);
-  };
-  resetCamera();
+  const resetCamera = () => setView('follow');
 
   scene.add(new THREE.HemisphereLight('#fff6ec', '#748971', 1.8));
   const sun = new THREE.DirectionalLight('#fff5e8', 2.5);
@@ -83,6 +66,10 @@ export function createWorld(options: WorldOptions) {
   sun.shadow.normalBias = 0.03;
   scene.add(sun);
   const environment = buildEnvironment(scene);
+  function render() {
+    environment.city.setCutaway(camera.position, rig.view === 'hall');
+    renderer.render(scene, camera);
+  }
   const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
   const keys = new Set<string>();
   const movementKeys = [
@@ -241,27 +228,10 @@ export function createWorld(options: WorldOptions) {
   const resize = new ResizeObserver(() => {
     const { width, height } = container.getBoundingClientRect();
     if (!width || !height || disposed) return;
-    camera.aspect = width / height;
-    // Preserve a useful horizontal overview on a narrow phone screen.
-    camera.fov = THREE.MathUtils.radToDeg(
-      2 *
-        Math.atan(
-          Math.tan(THREE.MathUtils.degToRad(43) / 2) *
-            Math.max(1, 1.35 / camera.aspect),
-        ),
-    );
-    camera.updateProjectionMatrix();
     renderer.setSize(width, height);
-    // Reserve space for desktop overlays while keeping the world canvas full-screen.
-    camera.setViewOffset(
-      width,
-      height,
-      width > 1000 ? Math.min(130, width * 0.075) : 0,
-      0,
-      width,
-      height,
-    );
-    renderer.render(scene, camera);
+    rig.resize(width, height);
+    rig.update(0, position, environment.cameraObstacles);
+    render();
   });
   resize.observe(container);
   const right = new THREE.Vector3(),
@@ -327,12 +297,15 @@ export function createWorld(options: WorldOptions) {
       }
     } else stop();
     controls.enabled = options.isActive();
-    controls.update();
-    renderer.render(scene, camera);
+    rig.update(dt, position, environment.cameraObstacles);
+    render();
   }
   function sync() {
     const next = !document.hidden && options.isActive();
-    if (!document.hidden && !disposed) renderer.render(scene, camera);
+    if (!document.hidden && !disposed) {
+      rig.update(0, position, environment.cameraObstacles);
+      render();
+    }
     if (next === active || disposed) return;
     active = next;
     previousTime = performance.now();
@@ -351,13 +324,14 @@ export function createWorld(options: WorldOptions) {
     disposed = true;
     abort.abort();
     resize.disconnect();
-    controls.dispose();
+    rig.dispose();
     renderer.setAnimationLoop(null);
     const geometries = new Set<THREE.BufferGeometry>(),
       materials = new Set<THREE.Material>(),
       textures = new Set<THREE.Texture>();
     scene.traverse((object) => {
       if (!(object instanceof THREE.Mesh)) return;
+      if (object instanceof THREE.InstancedMesh) object.dispose();
       geometries.add(object.geometry);
       for (const material of Array.isArray(object.material)
         ? object.material

@@ -69,12 +69,17 @@ export function createHub({ openLesson }) {
   $('#talkBtn').addEventListener('click', () => {
     if (nearby >= 0) openLesson(nearby);
   });
-  function setView(view) {
-    world?.setView(view);
+  async function setView(view) {
+    await loadWorld();
+    if (unavailable) return;
+    world.setView(view);
+    $('#hub').dataset.camera = view;
+    $('#followViewBtn').setAttribute('aria-pressed', String(view === 'follow'));
     $('#hallViewBtn').setAttribute('aria-pressed', String(view === 'hall'));
     $('#floorViewBtn').setAttribute('aria-pressed', String(view === 'floor'));
   }
-  $('#cameraBtn').addEventListener('click', () => setView('hall'));
+  $('#cameraBtn').addEventListener('click', () => setView('follow'));
+  $('#followViewBtn').addEventListener('click', () => setView('follow'));
   $('#hallViewBtn').addEventListener('click', () => setView('hall'));
   $('#floorViewBtn').addEventListener('click', () => setView('floor'));
   function setPanel(open) {

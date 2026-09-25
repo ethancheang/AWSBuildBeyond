@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { buildCity } from './city';
 import {
   TABLE_POSITIONS,
   STALL_LAYOUT,
@@ -150,6 +151,7 @@ export function buildEnvironment(scene: THREE.Scene) {
   scene.add(floor);
   const picks: THREE.Object3D[] = [floor];
   const markers: THREE.Mesh[] = [];
+  const cameraObstacles: THREE.Object3D[] = [];
   const fans: THREE.Group[] = [];
 
   // Eight radial walkways connect the central landmark and perimeter entrances.
@@ -190,6 +192,7 @@ export function buildEnvironment(scene: THREE.Scene) {
     else stall.userData.kind = 'placeholder';
     scene.add(stall);
     picks.push(stall);
+    cameraObstacles.push(stall);
     box(stall, '#E8DFD0', [0, 1.65, -1.1], [6.8, 3.3, 0.2]);
     for (const x of [-3.3, 3.3])
       box(stall, '#DED5C5', [x, 1.5, 0], [0.15, 3, 2.4]);
@@ -298,6 +301,7 @@ export function buildEnvironment(scene: THREE.Scene) {
     }
   });
 
+  const pavilionStart = scene.children.length;
   // Octagonal clock pavilion: a readable landmark at the heart of the hall.
   for (const [r, h, y, color] of [
     [3, 0.3, 0.15, '#D6C6A4'],
@@ -374,6 +378,8 @@ export function buildEnvironment(scene: THREE.Scene) {
   box(scene, palette.red, [0.28, 5.84, 0], [0.54, 0.24, 0.035]);
   box(scene, '#FFFFFF', [0.28, 5.72, 0], [0.54, 0.12, 0.04]);
 
+  cameraObstacles.push(...scene.children.slice(pavilionStart));
+
   // Perimeter ironwork leaves the front open, like the reference's cutaway view.
   const columns = Array.from({ length: 8 }, (_, i) =>
     radial((i * Math.PI) / 4, HALL_RADIUS - 0.2),
@@ -446,35 +452,14 @@ export function buildEnvironment(scene: THREE.Scene) {
   const traySign = label('TRAY RETURN', 'THANK YOU', palette.iron, 1.3, 0.4);
   traySign.position.set(-2.3, 1.4, 16.83);
   scene.add(traySign);
-  // Quiet city silhouettes and planting frame the playable pavilion.
-  for (let i = 0; i < 11; i++) {
-    const h = 5 + ((i * 7) % 9);
-    box(
-      scene,
-      i % 2 ? '#C5C5BD' : '#D9D6CB',
-      [-26 + i * 5, h / 2 - 1, -28 - (i % 3)],
-      [3.7, h, 3.7],
-    );
-  }
-  for (const x of [-20.5, 20.5])
-    for (const z of [-8, 7]) {
-      cylinder(scene, '#C08A69', [x, 0.4, z], [0.7, 0.8, 0.7]);
-      cylinder(scene, '#76674E', [x, 1.3, z], [0.1, 1.8, 0.1]);
-      for (let i = 0; i < 5; i++) {
-        const leaf = ball(
-          scene,
-          i % 2 ? '#628474' : '#799382',
-          [x + Math.sin(i) * 0.45, 2.2, z + Math.cos(i) * 0.45],
-          [0.35, 1.05, 0.35],
-        );
-        leaf.rotation.z = Math.sin(i) * 0.6;
-      }
-    }
+  const city = buildCity(scene);
   const player = character('#D32F2F', '#EDBD96', '#343934');
   player.person.position.set(SPAWN.x, 0, SPAWN.z);
+  player.person.rotation.y = Math.PI;
   scene.add(player.person);
   const you = label('YOU', '', palette.red, 0.9, 0.28);
   you.position.set(0, 2.3, 0);
   player.person.add(you);
-  return { floor, picks, markers, fans, player };
+  scene.updateMatrixWorld(true);
+  return { floor, picks, markers, fans, player, cameraObstacles, city };
 }
