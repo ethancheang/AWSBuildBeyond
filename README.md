@@ -32,7 +32,7 @@ The game is single-player and uses guided, authored lessons. There is no microph
 
 The full browser viewport is the 3D game. The logo, progress, lingo guide, sound controls and collapsible **Meet your hawkers** panel float over the hall. Lessons and dialogs are accessible HTML overlays over the same world. On smaller screens, open the hawker panel to choose a lesson or enable direct lessons.
 
-An octagonal footprint, eight radial walkways, shared tables and a central clock pavilion echo the supplied layout reference. Switch between **Hall view** and **Floor plan**, then orbit or zoom to explore. The three original stalls remain playable; five shuttered neighbours are decorative placeholders with no interactions or lessons:
+An octagonal footprint, eight radial walkways, shared tables and a central clock pavilion echo the supplied layout reference. The default **Follow** view stays behind your character and moves with you, with drag-to-orbit and zoom controls. The camera moves closer when a stall or the central pavilion blocks its view. **Hall view** and **Floor plan** remain available for orientation; reset returns to the follow camera. The three original stalls remain playable; five shuttered neighbours are decorative placeholders with no interactions or lessons:
 
 | Cuisine  | Coming-soon stall |
 | -------- | ----------------- |
@@ -41,6 +41,10 @@ An octagonal footprint, eight radial walkways, shared tables and a central clock
 | Western  | Steak It Easy     |
 | Japanese | Don Say Bojio     |
 | Korean   | Seoul Shiok       |
+
+A surrounding fictional city district adds glass towers, planted sky terraces, low-rise shopfronts, tropical trees and palms, planters, pavements, crossings, streetlights and cars. The city surrounds the hall in third person; the overview cuts away foreground buildings to keep the playable area visible. The backdrop is decorative, with walking confined to the hawker hall.
+
+Normal reading text inherits browser font sizes, including the browser’s preferred default text size. Panels wrap and scroll to accommodate it; only headings, the logo and decorative icons retain display sizing.
 
 The visual identity pairs [Permanent Marker](https://fonts.google.com/specimen/Permanent+Marker) for the logo and headings with [Outfit](https://fonts.google.com/specimen/Outfit) for reading text. Singapore's [red and white national colours](https://www.nhb.gov.sg/what-we-do/our-work/community-engagement/education/resources/national-symbols/national-flag) inform the palette, using [Material Red 700, #D32F2F](https://m1.material.io/style/color.html) alongside warm white surfaces, neutral text and dark-mode overlay colours.
 
@@ -65,7 +69,7 @@ Use the development server instead of opening `index.html` directly: browser mod
 | Visit a stall         | Click its counter or choose its lesson card; your avatar walks there      |
 | Talk nearby           | E / Enter, or the on-screen talk button                                   |
 | Look around           | Drag the scene; scroll or pinch to zoom                                   |
-| Reset camera          | Reset camera button                                                       |
+| Reset camera          | Reset follow camera button                                                |
 | Learn without walking | Select “Skip the walk, start lessons directly”                            |
 | Place an order        | Click phrase chips, then Place order; Enter also submits outside a button |
 | Undo / close a dialog | Backspace / Escape                                                        |
@@ -85,7 +89,7 @@ src/
   art/           Original SVG food and character illustrations
   audio/         Optional Web Audio feedback
   ui/            Hub, feedback, dialogs and formatting
-  world/         Three.js scene, procedural environment and navigation
+  world/         Three.js scene, follow camera, instanced city, hall and navigation
   shared/        Small shared utilities
   styles/        Base lesson styles and the new experience design
   main.js        Application composition and screen transitions
@@ -96,7 +100,7 @@ tests/
 
 The world loads in a separate module behind the title screen. The lesson controller does not depend on Three.js: the hub connects navigation to lesson entry through callbacks. Collision and route planning use a small, static 2D footprint of the hall, with A* routes around all eight counters, communal tables, the central pavilion and the tray return. A full physics engine would add cost without improving this fixed-floor walking mechanic.
 
-Geometry, materials and textures are shared where appropriate and disposed when the scene is destroyed. Pixel density and shadow resolution are bounded, background/hidden scenes stop rendering, and decorative animation respects reduced-motion preferences. All 3D models are generated locally, and Permanent Marker and Outfit are bundled through Fontsource; no runtime model or font CDN is required. The 3D engine is loaded separately from the lesson interface (approximately 148 kB gzipped).
+City windows and foliage use instanced meshes to keep draw calls bounded. Geometry, materials and textures are shared where appropriate and disposed when the scene is destroyed. Pixel density and shadow resolution are bounded, background/hidden scenes stop rendering, and decorative animation respects reduced-motion preferences. All 3D models are generated locally, and Permanent Marker and Outfit are bundled through Fontsource; no runtime model or font CDN is required. The 3D engine is loaded separately from the lesson interface (approximately 149 kB gzipped).
 
 ### Checks
 
