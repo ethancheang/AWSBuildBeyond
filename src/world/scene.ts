@@ -1,0 +1,348 @@
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { buildEnvironment } from './environment';
+import { findPath, moveWithCollision, STALL_POSITIONS } from './layout';
+import type { Point } from './layout';
+
+export interface WorldOptions {
+  container: HTMLElement;
+  isActive: () => boolean;
+  onStall: (index: number) => void;
+  onNearby: (index: number) => void;
+  onTip: (text: string) => void;
+  onUnavailable: () => void;
+}
+
+export function createWorld(options: WorldOptions) {
+  const { container } = options;
+  const scene = new THREE.Scene();
+  scene.background = new THREE.Color('#cbd9cc');
+  scene.fog = new THREE.Fog('#cbd9cc', 48, 85);
+  const camera = new THREE.PerspectiveCamera(43, 1, 0.1, 120);
+  const renderer = new THREE.WebGLRenderer({
+    antialias: true,
+    powerPreference: 'low-power',
+  });
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.75));
+  renderer.shadowMap.enabled = true;
+  renderer.shadowMap.type = THREE.PCFShadowMap;
+  renderer.outputColorSpace = THREE.SRGBColorSpace;
+  renderer.toneMapping = THREE.ACESFilmicToneMapping;
+  renderer.toneMappingExposure = 1.25;
+  const canvas = renderer.domElement;
+  canvas.tabIndex = 0;
+  canvas.setAttribute(
+    'aria-label',
+    '3D hawker centre. WASD or arrows to walk, E or Enter to talk. Drag to look around.',
+  );
+  canvas.setAttribute('aria-describedby', 'worldHelp');
+  container.append(canvas);
+  const controls = new OrbitControls(camera, canvas);
+  controls.enableDamping = true;
+  controls.enablePan = false;
+  controls.minDistance = 19;
+  controls.maxDistance = 47;
+  controls.minPolarAngle = 0.45;
+  controls.maxPolarAngle = 1.12;
+  controls.minAzimuthAngle = -0.65;
+  controls.maxAzimuthAngle = 0.65;
+  const resetCamera = () => {
+    camera.position.set(15, 24, 31);
+    controls.target.set(0, 1.2, 0);
+    controls.update();
+  };
+  resetCamera();
+
+  scene.add(new THREE.HemisphereLight('#fff6da', '#748971', 2.5));
+  const sun = new THREE.DirectionalLight('#fff0cf', 3.2);
+  sun.position.set(-12, 24, 14);
+  sun.castShadow = true;
+  sun.shadow.mapSize.set(1024, 1024);
+  Object.assign(sun.shadow.camera, {
+    left: -22,
+    right: 22,
+    top: 22,
+    bottom: -22,
+    near: 1,
+    far: 65,
+  });
+  sun.shadow.bias = -0.0005;
+  sun.shadow.normalBias = 0.03;
+  scene.add(sun);
+  const environment = buildEnvironment(scene);
+  const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
+  const keys = new Set<string>();
+  const movementKeys = [
+    'w',
+    'a',
+    's',
+    'd',
+    'arrowup',
+    'arrowleft',
+    'arrowdown',
+    'arrowright',
+  ];
+  const abort = new AbortController();
+  const signal = abort.signal;
+  let route: Point[] = [],
+    arrival: (() => void) | undefined;
+  let position: Point = { x: 0, z: 9 },
+    nearby = -1,
+    disposed = false,
+    active = false;
+  let previousTime = 0,
+    elapsed = 0;
+  let pointerStart = { x: 0, y: 0 };
+
+  function stop() {
+    keys.clear();
+    route = [];
+    arrival = undefined;
+  }
+  function navigate(target: Point, callback?: () => void) {
+    route = findPath(position, target);
+    arrival = route.length ? callback : undefined;
+    if (!route.length)
+      options.onTip('That spot is occupied. Try a clear part of the walkway.');
+  }
+  function goToStall(index: number) {
+    if (STALL_POSITIONS[index])
+      navigate(STALL_POSITIONS[index], () => options.onStall(index));
+  }
+  function updateNearby() {
+    const next = STALL_POSITIONS.findIndex(
+      (p) => Math.hypot(p.x - position.x, p.z - position.z) < 1.9,
+    );
+    if (next !== nearby) {
+      nearby = next;
+      options.onNearby(next);
+    }
+  }
+  const raycaster = new THREE.Raycaster(),
+    pointer = new THREE.Vector2();
+  canvas.addEventListener(
+    'pointerdown',
+    (event) => {
+      pointerStart = { x: event.clientX, y: event.clientY };
+    },
+    { signal },
+  );
+  canvas.addEventListener(
+    'pointerup',
+    (event) => {
+      if (
+        !options.isActive() ||
+        event.button !== 0 ||
+        Math.hypot(
+          event.clientX - pointerStart.x,
+          event.clientY - pointerStart.y,
+        ) > 6
+      )
+        return;
+      canvas.focus({ preventScroll: true });
+      const bounds = canvas.getBoundingClientRect();
+      pointer.set(
+        ((event.clientX - bounds.left) / bounds.width) * 2 - 1,
+        1 - ((event.clientY - bounds.top) / bounds.height) * 2,
+      );
+      raycaster.setFromCamera(pointer, camera);
+      const hit = raycaster.intersectObjects(environment.picks, true)[0];
+      if (!hit) return;
+      let object: THREE.Object3D | null = hit.object;
+      while (object) {
+        if (typeof object.userData.stall === 'number') {
+          goToStall(object.userData.stall);
+          return;
+        }
+        if (object.userData.kind === 'chope') {
+          options.onTip(
+            'Chope! A tissue packet means someone has reserved this seat.',
+          );
+          return;
+        }
+        if (object.userData.kind === 'tray') {
+          options.onTip(
+            'Return your tray after eating. Keep the table ready for the next diner.',
+          );
+          return;
+        }
+        object = object.parent;
+      }
+      if (hit.object === environment.floor)
+        navigate({ x: hit.point.x, z: hit.point.z });
+    },
+    { signal },
+  );
+  window.addEventListener(
+    'keydown',
+    (event) => {
+      if (!options.isActive() || event.ctrlKey || event.metaKey || event.altKey)
+        return;
+      const target = event.target as HTMLElement;
+      if (target.closest('input, textarea, select, [contenteditable="true"]'))
+        return;
+      const key = event.key.toLowerCase();
+      if (movementKeys.includes(key)) {
+        event.preventDefault();
+        keys.add(key);
+        route = [];
+        arrival = undefined;
+      }
+      if (
+        (key === 'e' || key === 'enter') &&
+        !target.closest('button, a') &&
+        nearby >= 0 &&
+        !event.repeat
+      ) {
+        event.preventDefault();
+        options.onStall(nearby);
+      }
+    },
+    { signal },
+  );
+  window.addEventListener(
+    'keyup',
+    (event) => keys.delete(event.key.toLowerCase()),
+    { signal },
+  );
+  window.addEventListener('blur', stop, { signal });
+  document.addEventListener(
+    'visibilitychange',
+    () => {
+      if (document.hidden) stop();
+      sync();
+    },
+    { signal },
+  );
+  canvas.addEventListener(
+    'webglcontextlost',
+    (event) => {
+      event.preventDefault();
+      options.onUnavailable();
+      dispose();
+    },
+    { signal },
+  );
+
+  const resize = new ResizeObserver(() => {
+    const { width, height } = container.getBoundingClientRect();
+    if (!width || !height || disposed) return;
+    camera.aspect = width / height;
+    // Preserve a useful horizontal overview on a narrow phone screen.
+    camera.fov = THREE.MathUtils.radToDeg(2 * Math.atan(Math.tan(THREE.MathUtils.degToRad(43) / 2) * Math.max(1, 1.35 / camera.aspect)));
+    camera.updateProjectionMatrix();
+    renderer.setSize(width, height);
+  });
+  resize.observe(container);
+  const right = new THREE.Vector3(),
+    forward = new THREE.Vector3();
+  function frame(time: number) {
+    if (disposed) return;
+    const dt = Math.min((time - previousTime) / 1000, 0.05);
+    previousTime = time;
+    elapsed += dt;
+    if (options.isActive()) {
+      let x =
+        Number(keys.has('d') || keys.has('arrowright')) -
+        Number(keys.has('a') || keys.has('arrowleft'));
+      let z =
+        Number(keys.has('s') || keys.has('arrowdown')) -
+        Number(keys.has('w') || keys.has('arrowup'));
+      if (x || z) {
+        camera.getWorldDirection(forward);
+        forward.y = 0;
+        forward.normalize();
+        right.crossVectors(forward, camera.up).normalize();
+        const v = right
+          .clone()
+          .multiplyScalar(x)
+          .addScaledVector(forward, -z)
+          .normalize();
+        x = v.x;
+        z = v.z;
+      } else if (route.length) {
+        const next = route[0],
+          distance = Math.hypot(next.x - position.x, next.z - position.z);
+        if (distance < 0.09) {
+          position = next;
+          route.shift();
+          if (!route.length) {
+            const callback = arrival;
+            arrival = undefined;
+            callback?.();
+          }
+        } else {
+          const step = Math.min(1, distance / (dt * 6 || 1));
+          x = ((next.x - position.x) / distance) * step;
+          z = ((next.z - position.z) / distance) * step;
+        }
+      }
+      const moving = !!(x || z);
+      if (moving) {
+        position = moveWithCollision(position, x * dt * 6, z * dt * 6);
+        environment.player.person.rotation.y = Math.atan2(x, z);
+      }
+      environment.player.person.position.set(position.x, 0, position.z);
+      const swing =
+        moving && !reducedMotion.matches ? Math.sin(elapsed * 14) * 0.38 : 0;
+      environment.player.left.rotation.x = swing;
+      environment.player.right.rotation.x = -swing;
+      updateNearby();
+      if (!reducedMotion.matches) {
+        environment.fans.forEach((fan) => (fan.rotation.y += dt * 2.5));
+        environment.markers.forEach((marker, i) => {
+          marker.position.y = 4.45 + Math.sin(elapsed * 2 + i) * 0.12;
+          marker.rotation.y += dt;
+        });
+      }
+    } else stop();
+    controls.enabled = options.isActive();
+    controls.update();
+    renderer.render(scene, camera);
+  }
+  function sync() {
+    const next = !document.hidden && container.getClientRects().length > 0;
+    if (next === active || disposed) return;
+    active = next;
+    previousTime = performance.now();
+    renderer.setAnimationLoop(next ? frame : null);
+    if (!next) stop();
+  }
+  function setCompleted(completed: boolean[]) {
+    environment.markers.forEach((marker, i) => {
+      const material = marker.material as THREE.MeshStandardMaterial;
+      material.color.set(completed[i] ? '#67af75' : '#e4b453');
+      material.emissive.copy(material.color);
+    });
+  }
+  function dispose() {
+    if (disposed) return;
+    disposed = true;
+    abort.abort();
+    resize.disconnect();
+    controls.dispose();
+    renderer.setAnimationLoop(null);
+    const geometries = new Set<THREE.BufferGeometry>(),
+      materials = new Set<THREE.Material>(),
+      textures = new Set<THREE.Texture>();
+    scene.traverse((object) => {
+      if (!(object instanceof THREE.Mesh)) return;
+      geometries.add(object.geometry);
+      for (const material of Array.isArray(object.material)
+        ? object.material
+        : [object.material]) {
+        materials.add(material);
+        for (const value of Object.values(material))
+          if (value instanceof THREE.Texture) textures.add(value);
+      }
+    });
+    textures.forEach((t) => t.dispose());
+    materials.forEach((m) => m.dispose());
+    geometries.forEach((g) => g.dispose());
+    sun.shadow.dispose();
+    renderer.dispose();
+    canvas.remove();
+  }
+  sync();
+  return { goToStall, stop, sync, resetCamera, setCompleted, dispose };
+}

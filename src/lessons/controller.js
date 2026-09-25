@@ -444,8 +444,8 @@ export function createLessons({ show, backToHub, onEnter }) {
     <div class="bigstars" aria-label="${stars} of 3 stars">${starsHTML(stars)}</div>
     <p style="font-weight:800;margin:.2em 0">${p}/${n} perfect first-try orders · ${L.score} pts</p>
     <p class="npc-say"><b>${lv.npc}:</b> “${lv.kind === 'nasi' ? 'Well done! Come back and practise any time.' : stars === 3 ? 'Wah, confirm local! Next time kopi on the house.' : stars === 2 ? 'Not bad at all! Practise a bit more, can be perfect.' : 'Steady progress. Come back tomorrow, try again!'}”</p>
-    ${allDone ? `<div class="unlock">🏅 You’ve cleared all three stalls. You’re officially a Maxwell regular!</div>` : ''}
-    <div class="row-btns"><button class="btn ghost" data-act="replay">Replay lesson</button><button class="btn primary" data-act="hub" data-primary>Back to Maxwell</button></div></div>`,
+    ${allDone ? `<div class="unlock">🏅 You’ve cleared all three stalls. You’re officially a hawker regular!</div>` : ''}
+    <div class="row-btns"><button class="btn ghost" data-act="replay">Replay lesson</button><button class="btn primary" data-act="hub" data-primary>Back to the centre</button></div></div>`,
       {
         hub: backToHub,
         close: backToHub,

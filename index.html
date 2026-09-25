@@ -1,12 +1,16 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" data-theme="light">
   <head>
     <meta charset="utf-8" />
     <meta
       name="viewport"
       content="width=device-width, initial-scale=1, viewport-fit=cover"
     />
-    <title>Hawker Lingo Simulator: Maxwell Food Centre</title>
+    <title>Hawker Lingo · A taste of Singapore</title>
+    <meta
+      name="description"
+      content="Explore a 3D Singapore hawker centre and learn to order kopi, fishball noodles and nasi lemak through playful, guided conversations."
+    />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
@@ -20,7 +24,8 @@
       <div class="card title-card">
         <div class="bunting" id="bunting" aria-hidden="true"></div>
         <div class="hero-art" id="heroArt" aria-hidden="true"></div>
-        <h1>Hawker Lingo Simulator<small>Maxwell Food Centre</small></h1>
+        <p class="eyebrow">SINGAPORE, ONE ORDER AT A TIME</p>
+        <h1>A little lingo.<br />A lot of <em>shiok.</em></h1>
         <p class="lede">
           Walk the hawker centre, meet the uncle and auntie behind the counter,
           and learn to order kopi, fishball noodles and nasi lemak like a local.
@@ -35,17 +40,27 @@
           id="startBtn"
           style="font-size: 1.1rem; padding: 0.7em 1.6em"
         >
-          Enter Maxwell
+          Let's makan <span aria-hidden="true">↗</span>
         </button>
+        <p class="title-footnote">
+          3 stalls · 18 customers · A taste of local life
+        </p>
       </div>
     </section>
 
     <!-- ============ HUB ============ -->
-    <section id="hub" class="screen" aria-label="Maxwell Food Centre hub">
+    <section
+      id="hub"
+      class="screen"
+      aria-label="Lau Pa Sat-inspired hawker centre"
+    >
       <header class="topbar">
         <div class="brand">
           <span class="brand-badge" aria-hidden="true">☕</span>
-          <div><b>Hawker Lingo</b><small>Maxwell Food Centre</small></div>
+          <div>
+            <b>Hawker Lingo<span class="brand-dot">.</span></b
+            ><small>A taste of Singapore</small>
+          </div>
         </div>
         <div class="top-actions">
           <span class="pill" id="hubStars">★ 0/9</span>
@@ -58,37 +73,60 @@
           </button>
         </div>
       </header>
+      <div class="hub-heading">
+        <div>
+          <p class="eyebrow">THE HAWKER TRAIL / SINGAPORE</p>
+          <h1>Come hungry. <em>Leave local.</em></h1>
+          <p>Your next conversation is just a few steps away.</p>
+        </div>
+        <span class="location-label">◎ &nbsp; Lau Pa Sat-inspired hall</span>
+      </div>
       <div class="hub-body">
         <div class="map-col">
           <div class="map-wrap">
-            <svg
-              id="map"
-              viewBox="0 0 800 540"
-              role="img"
-              aria-label="Top-down map of Maxwell Food Centre with three stalls"
-            ></svg>
+            <div class="world-toolbar">
+              <span id="worldMode"><i></i> EXPLORE THE CENTRE</span
+              ><button id="cameraBtn" aria-label="Reset camera view">
+                ↺ Reset view
+              </button>
+            </div>
+            <div id="world">
+              <p id="worldStatus" role="status">Getting the stalls ready…</p>
+            </div>
             <button id="talkBtn" class="talk-btn" hidden></button>
           </div>
-          <p class="map-help">
-            Click the floor, or use <kbd>WASD</kbd> / arrow keys, to walk. Step
-            onto an <b>Order here</b> mat and press <kbd>Enter</kbd> to talk to
-            the hawker.
+          <p class="map-help" id="worldHelp">
+            <span><kbd>WASD</kbd> / arrows to walk</span
+            ><span><kbd>E</kbd> / <kbd>Enter</kbd> to talk</span
+            ><span>Click to walk · Drag to look · Scroll to zoom</span>
           </p>
         </div>
         <aside class="side">
           <div class="card side-card">
-            <h2>Find a lesson</h2>
+            <p class="eyebrow">GOOD FOOD, GOOD CONVERSATIONS</p>
+            <h2>Meet your hawkers<span>03</span></h2>
+            <p class="side-intro">Pick a stall. We'll walk you there.</p>
             <div id="lessonList"></div>
+            <label class="direct-option"
+              ><input type="checkbox" id="directLessons" /> Skip the walk, start
+              lessons directly</label
+            >
           </div>
           <div id="gradBanner"></div>
           <div class="card side-card">
-            <h3>Hawker tip</h3>
+            <h3>💡 A little local knowledge</h3>
             <p id="hubTip"></p>
             <button class="link-btn" id="resetBtn">Reset progress</button>
           </div>
         </aside>
       </div>
     </section>
+    <noscript
+      ><p class="card">
+        Hawker Lingo needs JavaScript to run the interactive lessons. Please
+        enable it and reload.
+      </p></noscript
+    >
 
     <!-- ============ LESSON ============ -->
     <section id="lesson" class="screen" aria-label="Ordering lesson">

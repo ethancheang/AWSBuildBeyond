@@ -1,4 +1,5 @@
 import './styles/base.css';
+import './styles/experience.css';
 import { $, $$ } from './shared/dom.js';
 import { drinkSVG, noodleSVG } from './art/food.js';
 import { save, persist } from './state/progress.js';
@@ -12,7 +13,7 @@ import {
   toast,
 } from './ui/overlays.js';
 import { createLessons } from './lessons/controller.js';
-import { createHub } from './world/legacy-hub.js';
+import { createHub } from './ui/hub.js';
 $('#bunting').innerHTML = Array.from(
   { length: 16 },
   (_, i) =>
@@ -42,6 +43,7 @@ $('#startBtn').addEventListener('click', () => {
   beep([523, 784], 0.1);
   show('hub');
   hub.renderHub();
+  hub.loadWorld();
 });
 $('#glossBtn').addEventListener('click', lessons.openGlossary);
 $('#soundBtn').addEventListener('click', () => {
@@ -69,3 +71,4 @@ addEventListener('keydown', (e) => {
   if (modalOpen && e.key === 'Escape' && modalActs.close) modalActs.close();
 });
 addEventListener('scroll', hideTip, { passive: true });
+if (import.meta.hot) import.meta.hot.dispose(() => hub.dispose());
