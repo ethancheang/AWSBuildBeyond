@@ -1,3 +1,4 @@
+import { STALLS } from '../content/stalls';
 export interface Point {
   x: number;
   z: number;
@@ -6,24 +7,56 @@ export interface Obstacle extends Point {
   radius: number;
 }
 
-export const STALL_POSITIONS: Point[] = [
-  { x: -8, z: -4.4 },
-  { x: 0, z: -4.4 },
-  { x: 8, z: -4.4 },
-];
-export const TABLE_POSITIONS: Point[] = [
-  { x: -8, z: 1.5 },
-  { x: 8, z: 1.5 },
-  { x: -8, z: 7 },
-  { x: 8, z: 7 },
-];
-export const BOUNDS = { minX: -12, maxX: 12, minZ: -4.7, maxZ: 10 };
+export const HALL_RADIUS = 19;
+export const SPAWN: Point = { x: 0, z: 14 };
+export const radial = (angle: number, radius: number): Point => ({
+  x: Math.sin(angle) * radius,
+  z: Math.cos(angle) * radius,
+});
+export const STALL_LAYOUT = STALLS.map((stall, index) => {
+  const angle = ((index + 0.5) * Math.PI) / 4;
+  return {
+    ...stall,
+    angle,
+    position: radial(angle, 14.6),
+    approach: radial(angle, 11.7),
+    rotation: angle + Math.PI,
+  };
+});
+export const STALL_POSITIONS: Point[] = STALL_LAYOUT.filter(
+  (stall) => stall.lessonIndex !== undefined,
+)
+  .sort((a, b) => a.lessonIndex! - b.lessonIndex!)
+  .map((stall) => stall.approach);
+export const TABLE_POSITIONS: Point[] = Array.from({ length: 8 }, (_, i) =>
+  radial(((i + 0.5) * Math.PI) / 4, 7.8),
+);
+export const BOUNDS = { minX: -18.5, maxX: 18.5, minZ: -18.5, maxZ: 18.5 };
 // Radii include the player's clearance and the stools around each table.
 export const OBSTACLES: Obstacle[] = [
-  ...TABLE_POSITIONS.map((p) => ({ ...p, radius: 2.4 })),
-  { x: 0, z: 2.7, radius: 1.65 },
-  ...[-12, 12].flatMap((x) => [-3, 8].map((z) => ({ x, z, radius: 0.8 }))),
+  ...TABLE_POSITIONS.map((p) => ({ ...p, radius: 1.7 })),
+  { x: 0, z: 0, radius: 3.25 },
+  { x: -2.3, z: 16.4, radius: 0.9 },
 ];
+
+/** Convex octagon boundary, inset by the avatar's radius. */
+export function insideHall(p: Point): boolean {
+  const apothem = HALL_RADIUS * Math.cos(Math.PI / 8) - 0.45;
+  return STALL_LAYOUT.every(
+    (stall) =>
+      p.x * Math.sin(stall.angle) + p.z * Math.cos(stall.angle) <= apothem,
+  );
+}
+
+function insideStall(p: Point): boolean {
+  return STALL_LAYOUT.some((stall) => {
+    const dx = p.x - stall.position.x,
+      dz = p.z - stall.position.z;
+    const tangent = dx * Math.cos(stall.angle) - dz * Math.sin(stall.angle);
+    const depth = dx * Math.sin(stall.angle) + dz * Math.cos(stall.angle);
+    return Math.abs(tangent) < 3.8 && Math.abs(depth) < 1.95;
+  });
+}
 
 export function isWalkable(p: Point): boolean {
   return (
@@ -31,6 +64,8 @@ export function isWalkable(p: Point): boolean {
     p.x <= BOUNDS.maxX &&
     p.z >= BOUNDS.minZ &&
     p.z <= BOUNDS.maxZ &&
+    insideHall(p) &&
+    !insideStall(p) &&
     OBSTACLES.every((o) => Math.hypot(p.x - o.x, p.z - o.z) >= o.radius)
   );
 }
@@ -72,18 +107,18 @@ export function findPath(start: Point, goal: Point): Point[] {
   const key = (p: Point) => `${p.x},${p.z}`;
   const nodes = new Map<string, Point>();
   for (let x = BOUNDS.minX; x <= BOUNDS.maxX; x += step) {
-    for (let z = -4.5; z <= BOUNDS.maxZ; z += step) {
+    for (let z = BOUNDS.minZ; z <= BOUNDS.maxZ; z += step) {
       const p = { x, z };
       if (isWalkable(p)) nodes.set(key(p), p);
     }
   }
   const nearest = [...nodes.values()]
-    .filter((p) => clearPath(start, p))
     .sort(
       (a, b) =>
         Math.hypot(a.x - start.x, a.z - start.z) -
         Math.hypot(b.x - start.x, b.z - start.z),
-    )[0];
+    )
+    .find((p) => clearPath(start, p));
   if (!nearest) return [];
   const first = key(nearest),
     open = new Set([first]);

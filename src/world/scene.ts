@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { buildEnvironment } from './environment';
-import { findPath, moveWithCollision, STALL_POSITIONS } from './layout';
+import { findPath, moveWithCollision, STALL_POSITIONS, SPAWN } from './layout';
 import type { Point } from './layout';
 
 export interface WorldOptions {
@@ -16,9 +16,9 @@ export interface WorldOptions {
 export function createWorld(options: WorldOptions) {
   const { container } = options;
   const scene = new THREE.Scene();
-  scene.background = new THREE.Color('#cbd9cc');
-  scene.fog = new THREE.Fog('#cbd9cc', 48, 85);
-  const camera = new THREE.PerspectiveCamera(43, 1, 0.1, 120);
+  scene.background = new THREE.Color('#E4DDD1');
+  scene.fog = new THREE.Fog('#E4DDD1', 70, 120);
+  const camera = new THREE.PerspectiveCamera(43, 1, 0.1, 160);
   const renderer = new THREE.WebGLRenderer({
     antialias: true,
     powerPreference: 'low-power',
@@ -28,7 +28,7 @@ export function createWorld(options: WorldOptions) {
   renderer.shadowMap.type = THREE.PCFShadowMap;
   renderer.outputColorSpace = THREE.SRGBColorSpace;
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
-  renderer.toneMappingExposure = 1.25;
+  renderer.toneMappingExposure = 1;
   const canvas = renderer.domElement;
   canvas.tabIndex = 0;
   canvas.setAttribute(
@@ -40,21 +40,34 @@ export function createWorld(options: WorldOptions) {
   const controls = new OrbitControls(camera, canvas);
   controls.enableDamping = true;
   controls.enablePan = false;
-  controls.minDistance = 19;
-  controls.maxDistance = 47;
+  controls.minDistance = 22;
+  controls.maxDistance = 75;
   controls.minPolarAngle = 0.45;
-  controls.maxPolarAngle = 1.12;
-  controls.minAzimuthAngle = -0.65;
-  controls.maxAzimuthAngle = 0.65;
+  controls.maxPolarAngle = 1.15;
+  let overhead = false;
   const resetCamera = () => {
-    camera.position.set(15, 24, 31);
-    controls.target.set(0, 1.2, 0);
+    overhead = false;
+    controls.minPolarAngle = 0.45;
+    camera.position.set(19, 35, 43);
+    controls.target.set(0, 0, 0);
     controls.update();
+  };
+  const setView = (view: 'hall' | 'floor') => {
+    if (view === 'hall') resetCamera();
+    else {
+      overhead = true;
+      camera.position.set(0, 55, 0.1);
+      controls.minPolarAngle = 0.001;
+      controls.target.set(0, 0, 0);
+      controls.update();
+    }
+    if (!overhead) controls.minPolarAngle = 0.45;
+    renderer.render(scene, camera);
   };
   resetCamera();
 
-  scene.add(new THREE.HemisphereLight('#fff6da', '#748971', 2.5));
-  const sun = new THREE.DirectionalLight('#fff0cf', 3.2);
+  scene.add(new THREE.HemisphereLight('#fff6ec', '#748971', 1.8));
+  const sun = new THREE.DirectionalLight('#fff5e8', 2.5);
   sun.position.set(-12, 24, 14);
   sun.castShadow = true;
   sun.shadow.mapSize.set(1024, 1024);
@@ -64,7 +77,7 @@ export function createWorld(options: WorldOptions) {
     top: 22,
     bottom: -22,
     near: 1,
-    far: 65,
+    far: 90,
   });
   sun.shadow.bias = -0.0005;
   sun.shadow.normalBias = 0.03;
@@ -86,7 +99,7 @@ export function createWorld(options: WorldOptions) {
   const signal = abort.signal;
   let route: Point[] = [],
     arrival: (() => void) | undefined;
-  let position: Point = { x: 0, z: 9 },
+  let position: Point = { ...SPAWN },
     nearby = -1,
     disposed = false,
     active = false;
@@ -154,6 +167,7 @@ export function createWorld(options: WorldOptions) {
           goToStall(object.userData.stall);
           return;
         }
+        if (object.userData.kind === 'placeholder') return;
         if (object.userData.kind === 'chope') {
           options.onTip(
             'Chope! A tissue packet means someone has reserved this seat.',
@@ -238,6 +252,16 @@ export function createWorld(options: WorldOptions) {
     );
     camera.updateProjectionMatrix();
     renderer.setSize(width, height);
+    // Reserve space for desktop overlays while keeping the world canvas full-screen.
+    camera.setViewOffset(
+      width,
+      height,
+      width > 1000 ? Math.min(130, width * 0.075) : 0,
+      0,
+      width,
+      height,
+    );
+    renderer.render(scene, camera);
   });
   resize.observe(container);
   const right = new THREE.Vector3(),
@@ -297,7 +321,7 @@ export function createWorld(options: WorldOptions) {
       if (!reducedMotion.matches) {
         environment.fans.forEach((fan) => (fan.rotation.y += dt * 2.5));
         environment.markers.forEach((marker, i) => {
-          marker.position.y = 4.45 + Math.sin(elapsed * 2 + i) * 0.12;
+          marker.position.y = 4.7 + Math.sin(elapsed * 2 + i) * 0.12;
           marker.rotation.y += dt;
         });
       }
@@ -307,7 +331,8 @@ export function createWorld(options: WorldOptions) {
     renderer.render(scene, camera);
   }
   function sync() {
-    const next = !document.hidden && container.getClientRects().length > 0;
+    const next = !document.hidden && options.isActive();
+    if (!document.hidden && !disposed) renderer.render(scene, camera);
     if (next === active || disposed) return;
     active = next;
     previousTime = performance.now();
@@ -350,5 +375,5 @@ export function createWorld(options: WorldOptions) {
     canvas.remove();
   }
   sync();
-  return { goToStall, stop, sync, resetCamera, setCompleted, dispose };
+  return { goToStall, stop, sync, resetCamera, setView, setCompleted, dispose };
 }

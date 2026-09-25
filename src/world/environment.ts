@@ -1,11 +1,17 @@
 import * as THREE from 'three';
-import { TABLE_POSITIONS } from './layout';
+import {
+  TABLE_POSITIONS,
+  STALL_LAYOUT,
+  HALL_RADIUS,
+  SPAWN,
+  radial,
+} from './layout';
 
 const palette = {
-  iron: '#28574e',
+  iron: '#37474F',
   gold: '#d9ae67',
   cream: '#f9edcf',
-  red: '#bc563d',
+  red: '#D32F2F',
   teal: '#257f7e',
   green: '#64834a',
 };
@@ -75,9 +81,9 @@ export function buildEnvironment(scene: THREE.Scene) {
     ctx.strokeRect(12, 12, 1000, 232);
     ctx.textAlign = 'center';
     ctx.fillStyle = palette.cream;
-    ctx.font = 'bold 68px Georgia';
+    ctx.font = '400 64px "Permanent Marker"';
     ctx.fillText(text, 512, 115, 950);
-    ctx.font = '25px system-ui';
+    ctx.font = '500 28px Outfit';
     ctx.fillText(subtitle, 512, 184, 950);
     const texture = new THREE.CanvasTexture(canvas);
     texture.colorSpace = THREE.SRGBColorSpace;
@@ -111,226 +117,364 @@ export function buildEnvironment(scene: THREE.Scene) {
     return { person, left, right };
   }
 
-  // A tiled open cutaway hall, inspired by the ironwork of Lau Pa Sat.
-  box(scene, '#b89d7b', [0, -0.35, 1], [28, 0.65, 23]);
+  const base = new THREE.Mesh(
+    new THREE.CylinderGeometry(HALL_RADIUS, HALL_RADIUS + 0.3, 0.65, 8),
+    material('#BCADA0'),
+  );
+  base.position.y = -0.36;
+  base.receiveShadow = true;
+  scene.add(base);
   const tileCanvas = document.createElement('canvas');
   tileCanvas.width = 128;
   tileCanvas.height = 128;
-  const t = tileCanvas.getContext('2d')!;
-  t.fillStyle = '#e8ddc5';
-  t.fillRect(0, 0, 128, 128);
-  t.fillStyle = '#f5eddc';
-  t.fillRect(0, 0, 64, 64);
-  t.fillRect(64, 64, 64, 64);
-  t.strokeStyle = '#d6cbb6';
-  t.lineWidth = 1;
-  t.strokeRect(0, 0, 128, 128);
-  t.strokeRect(0, 0, 64, 64);
-  t.strokeRect(64, 64, 64, 64);
+  const tile = tileCanvas.getContext('2d')!;
+  tile.fillStyle = '#F4EDDF';
+  tile.fillRect(0, 0, 128, 128);
+  tile.fillStyle = '#E9E1D1';
+  tile.fillRect(0, 0, 64, 64);
+  tile.fillRect(64, 64, 64, 64);
+  tile.strokeStyle = '#DFD4C3';
+  tile.lineWidth = 1;
+  tile.strokeRect(0, 0, 128, 128);
   const tiles = new THREE.CanvasTexture(tileCanvas);
   tiles.wrapS = tiles.wrapT = THREE.RepeatWrapping;
-  tiles.repeat.set(14, 11);
+  tiles.repeat.set(19, 19);
   tiles.colorSpace = THREE.SRGBColorSpace;
   const floor = new THREE.Mesh(
-    new THREE.PlaneGeometry(28, 22),
+    new THREE.CircleGeometry(HALL_RADIUS, 8),
     new THREE.MeshStandardMaterial({ map: tiles, roughness: 1 }),
   );
   floor.rotation.x = -Math.PI / 2;
-  floor.position.set(0, 0, 1);
   floor.receiveShadow = true;
+  floor.userData.kind = 'floor';
   scene.add(floor);
   const picks: THREE.Object3D[] = [floor];
-  floor.userData.kind = 'floor';
-
-  const names = ['Heng Heng Kopi', 'Mei Mei Fishball Noodle', 'Dapur Aisyah'];
-  const subtitles = [
-    '01  /  KOPI & TEH  /  興興咖啡',
-    '02  /  FISHBALL NOODLES  /  美美魚丸麵',
-    '03  /  NASI LEMAK  /  MAKAN SEDAP',
-  ];
-  const colors = [palette.teal, palette.red, palette.green];
   const markers: THREE.Mesh[] = [];
-  for (let i = 0; i < 3; i++) {
+  const fans: THREE.Group[] = [];
+
+  // Eight radial walkways connect the central landmark and perimeter entrances.
+  for (let i = 0; i < 8; i++) {
+    const angle = (i * Math.PI) / 4,
+      point = radial(angle, 10.8);
+    const path = box(
+      scene,
+      '#FAF6ED',
+      [point.x, 0.015, point.z],
+      [2.2, 0.025, 15.6],
+    );
+    path.rotation.y = angle;
+    for (const side of [-1, 1]) {
+      const line = box(
+        scene,
+        '#CBB780',
+        [
+          point.x + Math.cos(angle) * side * 1.12,
+          0.032,
+          point.z - Math.sin(angle) * side * 1.12,
+        ],
+        [0.055, 0.02, 15.6],
+      );
+      line.rotation.y = angle;
+    }
+  }
+
+  STALL_LAYOUT.forEach((definition, index) => {
+    const { position, rotation, color, lessonIndex } = definition;
+    const interactive = lessonIndex !== undefined;
     const stall = new THREE.Group();
-    stall.position.set((i - 1) * 8, 0, -7);
-    stall.userData.stall = i;
+    stall.position.set(position.x, 0, position.z);
+    stall.rotation.y = rotation;
+    stall.name = `stall-${definition.id}`;
+    // Decorative stalls deliberately have no lesson identifier or interaction handler.
+    if (interactive) stall.userData.stall = lessonIndex;
+    else stall.userData.kind = 'placeholder';
     scene.add(stall);
     picks.push(stall);
-    box(stall, '#e4d7bb', [0, 1.9, -1.3], [7.5, 3.8, 0.25]);
-    box(stall, colors[i], [0, 0.68, 1.2], [7.5, 1.35, 0.5]);
-    box(stall, '#d5ded9', [0, 1.4, 1.1], [7.7, 0.16, 1.25]);
-    box(stall, colors[i], [0, 3.5, 0.6], [7.8, 0.9, 0.35]);
-    const sign = label(names[i], subtitles[i], colors[i], 7.3, 0.98);
-    sign.position.set(0, 3.55, 0.81);
-    stall.add(sign);
+    box(stall, '#E8DFD0', [0, 1.65, -1.1], [6.8, 3.3, 0.2]);
+    for (const x of [-3.3, 3.3])
+      box(stall, '#DED5C5', [x, 1.5, 0], [0.15, 3, 2.4]);
+    box(stall, color, [0, 0.65, 1.05], [6.8, 1.3, 0.5]);
+    box(stall, '#E2E4DF', [0, 1.34, 1], [7, 0.13, 1.1]);
+    const roof = box(stall, '#FDF9EF', [0, 3.05, -0.05], [7.15, 0.15, 3.35]);
+    roof.rotation.x = 0.06;
+    box(stall, color, [0, 2.92, 1.65], [7.15, 0.34, 0.12]);
     for (let j = 0; j < 12; j++) {
-      const strip = box(
+      const stripe = box(
         stall,
-        j % 2 ? palette.cream : colors[i],
-        [-3.57 + j * 0.65, 2.98, 1.05],
-        [0.65, 0.1, 1.7],
+        j % 2 ? '#FFF9F2' : color,
+        [-3.27 + j * 0.595, 2.91, 1.08],
+        [0.59, 0.05, 1.25],
       );
-      strip.rotation.x = 0.16;
+      stripe.rotation.x = 0.13;
     }
-    for (const x of [-3.65, 3.65])
-      cylinder(stall, palette.iron, [x, 1.5, 0.9], [0.07, 3, 0.07]);
-    box(stall, '#876244', [0, 1.65, -1.1], [6.4, 0.13, 0.65]);
-    for (let j = 0; j < 6; j++) {
-      cylinder(
-        stall,
-        j % 2 ? '#ede3c9' : '#ba6b36',
-        [-2.4 + j * 0.9, 1.9, -0.9],
-        [0.19, 0.4, 0.19],
+    const text = interactive
+      ? `${String(index + 1).padStart(2, '0')} / ${definition.cuisine.toUpperCase()}`
+      : `${definition.cuisine.toUpperCase()} / COMING SOON`;
+    for (const side of [-1, 1]) {
+      const sign = label(definition.name, text, color, 6.8, 1.25);
+      sign.position.set(0, 3.75, side === 1 ? 0.6 : -1.24);
+      if (side === -1) sign.rotation.y = Math.PI;
+      stall.add(sign);
+    }
+    for (const x of [-3.25, 3.25])
+      cylinder(stall, palette.iron, [x, 1.55, 1.35], [0.055, 3.1, 0.055]);
+    if (interactive) {
+      const cook = character(
+        lessonIndex === 0
+          ? '#FAF7F0'
+          : lessonIndex === 1
+            ? '#E6B1A6'
+            : '#D5A14D',
+        lessonIndex === 2 ? '#BD895F' : '#EDBF98',
+        lessonIndex === 0 ? '#96968D' : '#322C27',
       );
-    }
-    const cook = character(
-      i === 0 ? '#faf8ed' : i === 1 ? '#edb1a8' : '#d6a841',
-      i === 2 ? '#bd895f' : '#edbf98',
-      i === 0 ? '#999a91' : '#322c27',
-    );
-    cook.person.position.set(0, 0, 0);
-    stall.add(cook.person);
-    box(cook.person, colors[i], [0, 0.9, 0.25], [0.5, 0.67, 0.035]);
-    for (const x of [-2.3, 2.3]) {
-      cylinder(stall, '#eceade', [x, 1.54, 1.05], [0.38, 0.13, 0.38]);
-      ball(
-        stall,
-        i === 0 ? '#623b21' : i === 1 ? '#e5c283' : '#f8f0d1',
-        [x, 1.65, 1.05],
-        [0.25, 0.14, 0.25],
+      stall.add(cook.person);
+      box(cook.person, color, [0, 0.9, 0.25], [0.5, 0.67, 0.035]);
+      box(stall, '#906A47', [0, 1.6, -0.9], [5.8, 0.1, 0.6]);
+      for (let j = 0; j < 5; j++)
+        cylinder(
+          stall,
+          j % 2 ? '#EDE3C9' : '#A6653B',
+          [-2 + j, 1.87, -0.8],
+          [0.16, 0.45, 0.16],
+        );
+      for (const x of [-2.1, 2.1]) {
+        cylinder(stall, '#FFFAEB', [x, 1.45, 1], [0.35, 0.12, 0.35]);
+        ball(
+          stall,
+          lessonIndex === 0 ? '#613B25' : '#E4CE93',
+          [x, 1.57, 1],
+          [0.22, 0.13, 0.22],
+        );
+      }
+      const mat = box(stall, color, [0, 0.035, 2.65], [3, 0.04, 1.3]);
+      const marker = new THREE.Mesh(
+        new THREE.OctahedronGeometry(0.27),
+        new THREE.MeshStandardMaterial({
+          color: palette.gold,
+          emissive: palette.gold,
+          emissiveIntensity: 0.15,
+        }),
       );
+      marker.position.set(0, 4.7, 0);
+      stall.add(marker);
+      markers[lessonIndex] = marker;
+      mat.userData.stall = lessonIndex;
+    } else {
+      // Closed shutters and no host/marker make the placeholder state unambiguous.
+      box(stall, '#B6B3AA', [0, 1.95, 0.75], [6.35, 1.15, 0.1]);
+      for (let j = 0; j < 7; j++)
+        box(stall, '#D3CEC3', [0, 1.44 + j * 0.16, 0.82], [6.35, 0.025, 0.02]);
     }
-    const mat = box(
-      scene,
-      colors[i],
-      [(i - 1) * 8, 0.025, -4.3],
-      [3.2, 0.04, 1.5],
-    );
-    mat.userData.stall = i;
-    picks.push(mat);
-    const marker = new THREE.Mesh(
-      new THREE.OctahedronGeometry(0.24),
-      new THREE.MeshStandardMaterial({
-        color: palette.gold,
-        emissive: palette.gold,
-        emissiveIntensity: 0.2,
-      }),
-    );
-    marker.position.set((i - 1) * 8, 4.45, -6);
-    scene.add(marker);
-    markers.push(marker);
-  }
+  });
 
   TABLE_POSITIONS.forEach((p, i) => {
-    cylinder(scene, palette.iron, [p.x, 0.65, p.z], [0.13, 1.3, 0.13]);
-    cylinder(scene, '#f3e9cd', [p.x, 1.31, p.z], [1.27, 0.14, 1.27]);
+    cylinder(scene, palette.iron, [p.x, 0.52, p.z], [0.1, 1.04, 0.1]);
+    cylinder(scene, '#FCF9EC', [p.x, 1.06, p.z], [0.94, 0.12, 0.94]);
+    cylinder(scene, '#DACCAA', [p.x, 1.13, p.z], [0.77, 0.012, 0.77]);
+    cylinder(scene, '#FCF9EC', [p.x, 1.14, p.z], [0.72, 0.015, 0.72]);
     for (let j = 0; j < 4; j++) {
-      const x = p.x + Math.cos((j * Math.PI) / 2) * 1.65,
-        z = p.z + Math.sin((j * Math.PI) / 2) * 1.65;
-      cylinder(scene, palette.iron, [x, 0.35, z], [0.08, 0.7, 0.08]);
-      cylinder(scene, colors[i % 3], [x, 0.73, z], [0.37, 0.12, 0.37]);
+      const angle = (j * Math.PI) / 2 + (i * Math.PI) / 4,
+        x = p.x + Math.cos(angle) * 1.25,
+        z = p.z + Math.sin(angle) * 1.25;
+      cylinder(scene, palette.iron, [x, 0.29, z], [0.065, 0.58, 0.065]);
+      cylinder(
+        scene,
+        j % 2 ? '#C44E43' : '#6D8980',
+        [x, 0.62, z],
+        [0.28, 0.1, 0.28],
+      );
     }
-    const tissue = box(scene, '#fffaf0', [p.x, 1.46, p.z], [0.48, 0.16, 0.3]);
-    box(tissue, '#b7543d', [0, 0.52, 0], [0.8, 0.05, 0.7]);
-    tissue.userData.kind = 'chope';
-    picks.push(tissue);
+    if (i % 2 === 0) {
+      const tissue = box(
+        scene,
+        '#FFFFFF',
+        [p.x, 1.23, p.z],
+        [0.43, 0.16, 0.26],
+      );
+      box(tissue, '#D32F2F', [0, 0.52, 0], [0.75, 0.04, 0.65]);
+      tissue.userData.kind = 'chope';
+      picks.push(tissue);
+    }
   });
-  box(scene, palette.iron, [0, 0.9, 2.7], [2.1, 1.8, 1.4]);
-  for (let i = 0; i < 4; i++)
-    box(scene, '#c5cbc1', [0, 0.4 + i * 0.34, 3.43], [1.7, 0.08, 0.25]);
-  const trayLabel = label(
-    'TRAY RETURN',
-    'THANK YOU FOR KEEPING IT CLEAN',
-    palette.iron,
-    2.3,
-    0.58,
-  );
-  trayLabel.position.set(0, 1.6, 3.45);
-  scene.add(trayLabel);
-  trayLabel.userData.kind = 'tray';
-  picks.push(trayLabel);
 
-  for (const z of [-8.8, 1, 10.8]) {
-    for (const x of [-13, 13]) {
-      cylinder(scene, palette.iron, [x, 2.9, z], [0.14, 5.8, 0.14]);
-      cylinder(scene, palette.gold, [x, 0.22, z], [0.34, 0.4, 0.34]);
-      cylinder(scene, palette.gold, [x, 5.5, z], [0.27, 0.16, 0.27]);
-    }
-    // The front frame is lower to keep the walking area visible.
-    if (z === 10.8) continue;
-    const curve = new THREE.CatmullRomCurve3([
-      new THREE.Vector3(-13, 5.7, z),
-      new THREE.Vector3(-7, 7.5, z),
-      new THREE.Vector3(0, 8.1, z),
-      new THREE.Vector3(7, 7.5, z),
-      new THREE.Vector3(13, 5.7, z),
-    ]);
-    const arch = new THREE.Mesh(
-      new THREE.TubeGeometry(curve, 40, 0.11, 6, false),
-      material(palette.iron),
+  // Octagonal clock pavilion: a readable landmark at the heart of the hall.
+  for (const [r, h, y, color] of [
+    [3, 0.3, 0.15, '#D6C6A4'],
+    [2.7, 1, 0.8, palette.iron],
+    [2.9, 0.15, 1.35, '#D9BF86'],
+  ] as const) {
+    const platform = new THREE.Mesh(
+      new THREE.CylinderGeometry(r, r, h, 8),
+      material(color),
     );
-    scene.add(arch);
-    box(scene, palette.iron, [0, 5.7, z], [26, 0.12, 0.12]);
-    for (const x of [-10, -7, -4, 0, 4, 7, 10]) {
-      const height = 2.25 * (1 - Math.pow(x / 13, 2));
-      box(scene, palette.iron, [x, 5.7 + height / 2, z], [0.07, height, 0.07]);
-    }
+    platform.position.y = y;
+    platform.receiveShadow = true;
+    platform.castShadow = true;
+    scene.add(platform);
   }
-  const venue = label(
-    'LAU PA SAT',
-    'A LITTLE LINGO. A LOT OF FLAVOUR.',
-    palette.iron,
-    6,
-    1.5,
+  box(scene, '#F5EFDA', [0, 2.3, 0], [1.8, 1.8, 1.8]);
+  for (const x of [-0.7, 0, 0.7])
+    for (const z of [-0.92, 0.92])
+      box(scene, palette.iron, [x, 2.25, z], [0.16, 1.6, 0.05]);
+  const roof = new THREE.Mesh(
+    new THREE.ConeGeometry(1.75, 0.7, 4),
+    material(palette.iron),
   );
-  venue.position.set(0, 6.7, -8.5);
-  scene.add(venue);
-  for (const x of [-12, 12])
-    for (const z of [-3, 8]) {
-      cylinder(scene, '#bf7752', [x, 0.35, z], [0.42, 0.7, 0.42]);
-      for (let j = 0; j < 5; j++) {
-        const leaf = ball(
-          scene,
-          j % 2 ? '#507c52' : '#6c934d',
-          [x + Math.cos(j * 1.26) * 0.24, 1.03, z + Math.sin(j * 1.26) * 0.24],
-          [0.18, 0.73, 0.18],
+  roof.rotation.y = Math.PI / 4;
+  roof.position.y = 3.5;
+  roof.castShadow = true;
+  scene.add(roof);
+  box(scene, '#FCF7E8', [0, 4.08, 0], [1.14, 1.1, 1.14]);
+  const clockCanvas = document.createElement('canvas');
+  clockCanvas.width = 256;
+  clockCanvas.height = 256;
+  const clock = clockCanvas.getContext('2d')!;
+  clock.fillStyle = '#FAF4E4';
+  clock.fillRect(0, 0, 256, 256);
+  clock.strokeStyle = palette.iron;
+  clock.lineWidth = 9;
+  clock.beginPath();
+  clock.arc(128, 128, 109, 0, Math.PI * 2);
+  clock.stroke();
+  for (let i = 0; i < 12; i++) {
+    const a = (i * Math.PI) / 6;
+    clock.beginPath();
+    clock.moveTo(128 + Math.sin(a) * 85, 128 - Math.cos(a) * 85);
+    clock.lineTo(128 + Math.sin(a) * 96, 128 - Math.cos(a) * 96);
+    clock.stroke();
+  }
+  clock.lineWidth = 12;
+  clock.lineCap = 'round';
+  clock.beginPath();
+  clock.moveTo(128, 63);
+  clock.lineTo(128, 128);
+  clock.lineTo(178, 151);
+  clock.stroke();
+  const clockTexture = new THREE.CanvasTexture(clockCanvas);
+  clockTexture.colorSpace = THREE.SRGBColorSpace;
+  for (let i = 0; i < 4; i++) {
+    const a = (i * Math.PI) / 2,
+      face = new THREE.Mesh(
+        new THREE.PlaneGeometry(0.94, 0.94),
+        new THREE.MeshBasicMaterial({ map: clockTexture }),
+      );
+    face.position.set(Math.sin(a) * 0.578, 4.09, Math.cos(a) * 0.578);
+    face.rotation.y = a;
+    scene.add(face);
+  }
+  const cap = new THREE.Mesh(
+    new THREE.ConeGeometry(1.05, 0.68, 4),
+    material(palette.iron),
+  );
+  cap.rotation.y = Math.PI / 4;
+  cap.position.y = 4.96;
+  scene.add(cap);
+  cylinder(scene, palette.iron, [0, 5.6, 0], [0.035, 0.8, 0.035]);
+  box(scene, palette.red, [0.28, 5.84, 0], [0.54, 0.24, 0.035]);
+  box(scene, '#FFFFFF', [0.28, 5.72, 0], [0.54, 0.12, 0.04]);
+
+  // Perimeter ironwork leaves the front open, like the reference's cutaway view.
+  const columns = Array.from({ length: 8 }, (_, i) =>
+    radial((i * Math.PI) / 4, HALL_RADIUS - 0.2),
+  );
+  const beam = (
+    a: THREE.Vector3,
+    b: THREE.Vector3,
+    color: string,
+    r = 0.055,
+  ) => {
+    const direction = b.clone().sub(a),
+      item = new THREE.Mesh(
+        new THREE.CylinderGeometry(r, r, direction.length(), 6),
+        material(color),
+      );
+    item.position.copy(a).add(b).multiplyScalar(0.5);
+    item.quaternion.setFromUnitVectors(
+      new THREE.Vector3(0, 1, 0),
+      direction.normalize(),
+    );
+    scene.add(item);
+  };
+  columns.forEach((p, i) => {
+    const height = p.z > 8 ? 3.4 : 5.8;
+    cylinder(scene, palette.iron, [p.x, height / 2, p.z], [0.12, height, 0.12]);
+    cylinder(scene, palette.gold, [p.x, height, p.z], [0.22, 0.12, 0.22]);
+    const next = columns[(i + 1) % 8];
+    if (p.z <= 8 && next.z <= 8) {
+      beam(
+        new THREE.Vector3(p.x, 5.65, p.z),
+        new THREE.Vector3(next.x, 5.65, next.z),
+        palette.iron,
+        0.075,
+      );
+      beam(
+        new THREE.Vector3(p.x, 4.8, p.z),
+        new THREE.Vector3(next.x, 4.8, next.z),
+        palette.iron,
+        0.055,
+      );
+      for (let j = 1; j < 8; j++) {
+        const x = p.x + ((next.x - p.x) * j) / 8,
+          z = p.z + ((next.z - p.z) * j) / 8;
+        const flag = new THREE.Mesh(
+          new THREE.ConeGeometry(0.22, 0.5, 3),
+          material(j % 2 ? '#FAF6EF' : palette.red),
         );
-        leaf.rotation.z = Math.cos(j * 1.26) * 0.48;
+        flag.position.set(x, 5.27, z);
+        flag.rotation.z = Math.PI;
+        scene.add(flag);
       }
     }
-  const fans: THREE.Group[] = [];
-  for (const x of [-6, 6]) {
-    cylinder(scene, palette.iron, [x, 5.45, 0], [0.04, 0.7, 0.04]);
-    const fan = new THREE.Group();
-    fan.position.set(x, 5.05, 0);
-    scene.add(fan);
-    fans.push(fan);
-    ball(fan, palette.gold, [0, 0, 0], [0.16, 0.12, 0.16]);
-    for (let j = 0; j < 3; j++) {
-      const blade = box(
-        fan,
-        palette.iron,
-        [Math.cos(j * 2.094) * 0.53, 0, Math.sin(j * 2.094) * 0.53],
-        [1.1, 0.03, 0.17],
-      );
-      blade.rotation.y = -j * 2.094;
-    }
-  }
-  // Distant city blocks frame the pavilion without external models or downloads.
-  for (let i = 0; i < 13; i++) {
-    const h = 6 + ((i * 7) % 9);
+    const number = label(String(i + 1), '', palette.red, 0.65, 0.35);
+    number.position.set(p.x, 2.3, p.z + 0.14);
+    scene.add(number);
+  });
+  const entrance = label(
+    'COME IN, MAKAN',
+    'SINGAPORE / EIGHT STALLS, ONE ROOF',
+    palette.red,
+    4.5,
+    1.12,
+  );
+  entrance.rotation.x = -Math.PI / 2;
+  entrance.position.set(0, 0.06, 17.2);
+  scene.add(entrance);
+  const tray = box(scene, palette.iron, [-2.3, 0.6, 16.4], [1.1, 1.2, 0.8]);
+  tray.userData.kind = 'tray';
+  picks.push(tray);
+  const traySign = label('TRAY RETURN', 'THANK YOU', palette.iron, 1.3, 0.4);
+  traySign.position.set(-2.3, 1.4, 16.83);
+  scene.add(traySign);
+  // Quiet city silhouettes and planting frame the playable pavilion.
+  for (let i = 0; i < 11; i++) {
+    const h = 5 + ((i * 7) % 9);
     box(
       scene,
-      i % 2 ? '#9caea3' : '#b1bcb0',
-      [-25 + i * 4, h / 2 - 1, -19 - (i % 3) * 2],
-      [3, h, 3],
+      i % 2 ? '#C5C5BD' : '#D9D6CB',
+      [-26 + i * 5, h / 2 - 1, -28 - (i % 3)],
+      [3.7, h, 3.7],
     );
   }
-  const player = character('#dc7848', '#edbd96', '#343934');
+  for (const x of [-20.5, 20.5])
+    for (const z of [-8, 7]) {
+      cylinder(scene, '#C08A69', [x, 0.4, z], [0.7, 0.8, 0.7]);
+      cylinder(scene, '#76674E', [x, 1.3, z], [0.1, 1.8, 0.1]);
+      for (let i = 0; i < 5; i++) {
+        const leaf = ball(
+          scene,
+          i % 2 ? '#628474' : '#799382',
+          [x + Math.sin(i) * 0.45, 2.2, z + Math.cos(i) * 0.45],
+          [0.35, 1.05, 0.35],
+        );
+        leaf.rotation.z = Math.sin(i) * 0.6;
+      }
+    }
+  const player = character('#D32F2F', '#EDBD96', '#343934');
+  player.person.position.set(SPAWN.x, 0, SPAWN.z);
   scene.add(player.person);
-  player.person.position.set(0, 0, 9);
-  const you = label('YOU', '', palette.iron, 0.85, 0.26);
-  you.position.set(0, 2.25, 0);
+  const you = label('YOU', '', palette.red, 0.9, 0.28);
+  you.position.set(0, 2.3, 0);
   player.person.add(you);
   return { floor, picks, markers, fans, player };
 }
