@@ -19,7 +19,7 @@ export function createWorld(options: WorldOptions) {
   const scene = new THREE.Scene();
   scene.background = new THREE.Color('#BFDCE5');
   scene.fog = new THREE.Fog('#BFDCE5', 90, 185);
-  const camera = new THREE.PerspectiveCamera(58, 1, 0.1, 260);
+  const camera = new THREE.OrthographicCamera(-12, 12, 12, -12, 0.1, 260);
   const renderer = new THREE.WebGLRenderer({
     antialias: true,
     powerPreference: 'low-power',
@@ -35,7 +35,7 @@ export function createWorld(options: WorldOptions) {
   canvas.tabIndex = 0;
   canvas.setAttribute(
     'aria-label',
-    '3D hawker centre. WASD or arrows to walk, E or Enter to talk. Drag to look around.',
+    '3D hawker centre. WASD or arrows to walk, E or Enter to talk. Isometric view. Right-drag to rotate.',
   );
   canvas.setAttribute('aria-describedby', 'worldHelp');
   container.append(canvas);
@@ -43,8 +43,8 @@ export function createWorld(options: WorldOptions) {
   const controls = rig.controls;
   const setView = (view: CameraView) => {
     if (disposed) return;
-    rig.setView(view, position, environment.player.person.rotation.y);
-    rig.update(0, position, environment.cameraObstacles);
+    rig.setView(view, position);
+    rig.update(0, position);
     render();
   };
   const resetCamera = () => setView('follow');
@@ -67,7 +67,7 @@ export function createWorld(options: WorldOptions) {
   scene.add(sun);
   const environment = buildEnvironment(scene);
   function render() {
-    environment.city.setCutaway(camera.position, rig.view === 'hall');
+    environment.city.setCutaway(camera.position, rig.view !== 'floor');
     renderer.render(scene, camera);
   }
   const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
@@ -230,7 +230,7 @@ export function createWorld(options: WorldOptions) {
     if (!width || !height || disposed) return;
     renderer.setSize(width, height);
     rig.resize(width, height);
-    rig.update(0, position, environment.cameraObstacles);
+    rig.update(0, position);
     render();
   });
   resize.observe(container);
@@ -299,13 +299,13 @@ export function createWorld(options: WorldOptions) {
       }
     } else stop();
     controls.enabled = options.isActive();
-    rig.update(dt, position, environment.cameraObstacles);
+    rig.update(dt, position);
     render();
   }
   function sync() {
     const next = !document.hidden && options.isActive();
     if (!document.hidden && !disposed) {
-      rig.update(0, position, environment.cameraObstacles);
+      rig.update(0, position);
       render();
     }
     if (next === active || disposed) return;

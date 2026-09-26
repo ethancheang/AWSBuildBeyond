@@ -18,18 +18,19 @@ export function followCharacter(
 }
 
 export function createCameraRig(
-  camera: THREE.PerspectiveCamera,
+  camera: THREE.OrthographicCamera,
   canvas: HTMLCanvasElement,
   start: Point,
 ) {
-  // Keep the desired orbit separate from the rendered camera. Obstructions can
-  // shorten the camera arm without changing the user's zoom or orbit settings.
+  // Parallel projection keeps the 3D world reading like an isometric diorama.
   const orbit = camera.clone();
   const controls = new OrbitControls(orbit, canvas);
   controls.enablePan = false;
   controls.enableDamping = true;
-  const obstructionRay = new THREE.Raycaster();
-  const direction = new THREE.Vector3();
+  controls.mouseButtons.LEFT = null;
+  controls.mouseButtons.RIGHT = THREE.MOUSE.ROTATE;
+  controls.minZoom = 0.6;
+  controls.maxZoom = 2.5;
   let view: CameraView = 'follow';
   let width = 1,
     height = 1;
@@ -37,41 +38,30 @@ export function createCameraRig(
   function resize(w: number, h: number) {
     width = w;
     height = h;
-    orbit.aspect = w / h;
-    orbit.fov =
-      view === 'follow'
-        ? 58
-        : THREE.MathUtils.radToDeg(
-            2 *
-              Math.atan(
-                Math.tan(THREE.MathUtils.degToRad(43) / 2) *
-                  Math.max(1, 1.35 / orbit.aspect),
-              ),
-          );
-    orbit.setViewOffset(w, h, w > 1000 ? Math.min(110, w * 0.065) : 0, 0, w, h);
+    const halfHeight = (view === 'follow' ? 12 : 29) * Math.max(1, h / w);
+    orbit.left = (-halfHeight * w) / h;
+    orbit.right = (halfHeight * w) / h;
+    orbit.top = halfHeight;
+    orbit.bottom = -halfHeight;
     orbit.updateProjectionMatrix();
   }
 
-  function setView(next: CameraView, player: Point, heading = Math.PI) {
+  function setView(next: CameraView, player: Point) {
     // Flush damping before a preset so an unfinished drag cannot move it.
     controls.enableDamping = false;
     controls.update();
     view = next;
-    controls.minDistance = next === 'follow' ? 3 : 22;
-    controls.maxDistance = next === 'follow' ? 13 : 80;
-    controls.minPolarAngle = next === 'floor' ? 0.001 : 0.4;
-    controls.maxPolarAngle = next === 'follow' ? 1.35 : 1.15;
+    const angle = next === 'floor' ? 0.001 : Math.acos(1 / Math.sqrt(3));
+    controls.minPolarAngle = angle;
+    controls.maxPolarAngle = angle;
+    orbit.zoom = 1;
     if (next === 'follow') {
       controls.target.set(player.x, 1.65, player.z);
-      orbit.position.set(
-        player.x - Math.sin(heading) * 8.5 - Math.cos(heading) * 1.2,
-        4.4,
-        player.z - Math.cos(heading) * 8.5 + Math.sin(heading) * 1.2,
-      );
+      orbit.position.copy(controls.target).add(new THREE.Vector3(18, 18, 18));
     } else {
       controls.target.set(0, 0, 0);
       orbit.position.set(
-        ...((next === 'floor' ? [0, 55, 0.1] : [19, 35, 43]) as [
+        ...((next === 'floor' ? [0, 55, 0.1] : [35, 35, 35]) as [
           number,
           number,
           number,
@@ -83,24 +73,11 @@ export function createCameraRig(
     resize(width, height);
   }
 
-  function update(dt: number, player: Point, obstacles: THREE.Object3D[]) {
+  function update(dt: number, player: Point) {
     if (view === 'follow')
       followCharacter(orbit.position, controls.target, player, dt);
     controls.update();
     camera.copy(orbit);
-    if (view === 'follow') {
-      direction.copy(camera.position).sub(controls.target);
-      const desiredDistance = direction.length();
-      direction.normalize();
-      obstructionRay.set(controls.target, direction);
-      obstructionRay.far = desiredDistance;
-      const hit = obstructionRay.intersectObjects(obstacles, true)[0];
-      if (hit)
-        camera.position
-          .copy(controls.target)
-          .addScaledVector(direction, Math.max(0.45, hit.distance - 0.3));
-      camera.lookAt(controls.target);
-    }
     camera.updateMatrixWorld();
   }
   setView('follow', start);
