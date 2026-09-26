@@ -4,6 +4,13 @@ import type { CameraView } from './camera';
 import { buildEnvironment } from './environment';
 import { findPath, moveWithCollision, STALL_POSITIONS, SPAWN } from './layout';
 import type { Point } from './layout';
+import {
+  createMotion,
+  horizontalSpeed,
+  RUN_SPEED,
+  SPRINT_SPEED,
+  stepMotion,
+} from './movement';
 
 export interface WorldOptions {
   container: HTMLElement;
@@ -35,7 +42,7 @@ export function createWorld(options: WorldOptions) {
   canvas.tabIndex = 0;
   canvas.setAttribute(
     'aria-label',
-    '3D hawker centre. WASD or arrows to walk, E or Enter to talk. Drag to look around.',
+    '3D hawker centre. WASD or arrows to walk, Shift to sprint, Space to jump, E or Enter to talk. Drag to look around.',
   );
   canvas.setAttribute('aria-describedby', 'worldHelp');
   container.append(canvas);
@@ -43,7 +50,7 @@ export function createWorld(options: WorldOptions) {
   const controls = rig.controls;
   const setView = (view: CameraView) => {
     if (disposed) return;
-    rig.setView(view, position, environment.player.person.rotation.y);
+    rig.setView(view, position, motion.heading);
     rig.update(0, position, environment.cameraObstacles);
     render();
   };
@@ -66,6 +73,8 @@ export function createWorld(options: WorldOptions) {
   sun.shadow.normalBias = 0.03;
   scene.add(sun);
   const environment = buildEnvironment(scene);
+  // Yaw first so the running lean tilts along the character's own forward axis.
+  environment.player.person.rotation.order = 'YXZ';
   function render() {
     environment.city.setCutaway(camera.position, rig.view === 'hall');
     renderer.render(scene, camera);
@@ -93,9 +102,14 @@ export function createWorld(options: WorldOptions) {
   let previousTime = 0,
     elapsed = 0;
   let pointerStart = { x: 0, y: 0 };
+  const motion = createMotion();
+  let jumpQueued = false,
+    stride = 0;
 
   function stop() {
     keys.clear();
+    jumpQueued = false;
+    Object.assign(motion, { vx: 0, vz: 0, y: 0, vy: 0, grounded: true });
     route = [];
     arrival = undefined;
   }
@@ -189,6 +203,11 @@ export function createWorld(options: WorldOptions) {
         route = [];
         arrival = undefined;
       }
+      if (key === 'shift') keys.add(key);
+      if (key === ' ' && !target.closest('button, a')) {
+        event.preventDefault();
+        if (!event.repeat) jumpQueued = true;
+      }
       if (
         (key === 'e' || key === 'enter') &&
         !target.closest('button, a') &&
@@ -265,8 +284,12 @@ export function createWorld(options: WorldOptions) {
       } else if (route.length) {
         const next = route[0],
           distance = Math.hypot(next.x - position.x, next.z - position.z);
-        if (distance < 0.09) {
-          position = next;
+        const last = route.length === 1;
+        if (distance < (last ? 0.09 : 0.35)) {
+          if (last) {
+            position = next;
+            motion.vx = motion.vz = 0;
+          }
           route.shift();
           if (!route.length) {
             const callback = arrival;
@@ -274,21 +297,50 @@ export function createWorld(options: WorldOptions) {
             callback?.();
           }
         } else {
-          const step = Math.min(1, distance / (dt * 6 || 1));
+          // Ease in to the final point so inertia cannot overshoot it.
+          const step = last ? Math.min(1, distance / 1.2) : 1;
           x = ((next.x - position.x) / distance) * step;
           z = ((next.z - position.z) / distance) * step;
         }
       }
-      const moving = !!(x || z);
-      if (moving) {
-        position = moveWithCollision(position, x * dt * 6, z * dt * 6);
-        environment.player.person.rotation.y = Math.atan2(x, z);
+      const { dx, dz } = stepMotion(
+        motion,
+        { x, z, sprint: keys.has('shift'), jump: jumpQueued },
+        dt,
+      );
+      jumpQueued = false;
+      if (dx || dz) {
+        const before = position;
+        position = moveWithCollision(position, dx, dz);
+        // Blocked axes lose their velocity so walls do not store momentum.
+        if (dt) {
+          motion.vx = (position.x - before.x) / dt;
+          motion.vz = (position.z - before.z) / dt;
+        }
       }
-      environment.player.person.position.set(position.x, 0, position.z);
-      const swing =
-        moving && !reducedMotion.matches ? Math.sin(elapsed * 14) * 0.38 : 0;
-      environment.player.left.rotation.x = swing;
-      environment.player.right.rotation.x = -swing;
+      const speed = horizontalSpeed(motion);
+      const person = environment.player.person;
+      person.rotation.y = motion.heading;
+      person.position.set(position.x, motion.y, position.z);
+      // Short landing squash, and a slight forward lean at speed.
+      const squash =
+        motion.landed < 0.18 && !reducedMotion.matches
+          ? Math.sin((motion.landed / 0.18) * Math.PI) * 0.12
+          : 0;
+      person.scale.set(1 + squash * 0.5, 1 - squash, 1 + squash * 0.5);
+      person.rotation.x = (speed / SPRINT_SPEED) * 0.14;
+      stride += dt * (6 + speed * 1.6);
+      const amplitude = reducedMotion.matches
+        ? 0
+        : motion.grounded
+          ? Math.min(1, speed / RUN_SPEED) * (speed > RUN_SPEED ? 0.6 : 0.42)
+          : 0;
+      const swing = Math.sin(stride) * amplitude;
+      const player = environment.player;
+      player.left.rotation.x = motion.grounded ? swing : -0.5;
+      player.right.rotation.x = motion.grounded ? -swing : 0.3;
+      player.leftArm.rotation.x = motion.grounded ? -swing * 0.9 : -0.9;
+      player.rightArm.rotation.x = motion.grounded ? swing * 0.9 : -0.9;
       updateNearby();
       if (!reducedMotion.matches) {
         environment.fans.forEach((fan) => (fan.rotation.y += dt * 2.5));
@@ -299,7 +351,12 @@ export function createWorld(options: WorldOptions) {
       }
     } else stop();
     controls.enabled = options.isActive();
-    rig.update(dt, position, environment.cameraObstacles);
+    rig.update(dt, position, environment.cameraObstacles, {
+      heading: motion.heading,
+      speed: horizontalSpeed(motion),
+      sprinting: keys.has('shift'),
+      height: motion.y,
+    });
     render();
   }
   function sync() {

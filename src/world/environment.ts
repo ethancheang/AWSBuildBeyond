@@ -111,11 +111,21 @@ export function buildEnvironment(scene: THREE.Scene) {
     cylinder(person, shirt, [0, 0.94, 0], [0.37, 0.7, 0.25]);
     ball(person, skin, [0, 1.57, 0], [0.3, 0.34, 0.29]);
     ball(person, hair, [0, 1.77, -0.03], [0.31, 0.2, 0.29]);
-    cylinder(person, skin, [-0.45, 0.94, 0], [0.105, 0.63, 0.1]);
-    cylinder(person, skin, [0.45, 0.94, 0], [0.105, 0.63, 0.1]);
+    const leftArm = cylinder(
+      person,
+      skin,
+      [-0.45, 0.94, 0],
+      [0.105, 0.63, 0.1],
+    );
+    const rightArm = cylinder(
+      person,
+      skin,
+      [0.45, 0.94, 0],
+      [0.105, 0.63, 0.1],
+    );
     for (const x of [-0.1, 0.1])
       ball(person, '#253d36', [x, 1.59, 0.272], [0.025, 0.03, 0.025]);
-    return { person, left, right };
+    return { person, left, right, leftArm, rightArm };
   }
 
   const base = new THREE.Mesh(
