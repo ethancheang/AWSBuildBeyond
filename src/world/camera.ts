@@ -3,7 +3,7 @@ import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import type { Point } from './layout';
 import { angleDelta, RUN_SPEED } from './movement';
 
-export type CameraView = 'follow' | 'hall' | 'floor';
+export type CameraView = 'follow' | 'overview';
 
 /** What the follow camera needs to know about the character each frame. */
 export interface FollowSubject {
@@ -107,7 +107,8 @@ export function createCameraRig(
     view = next;
     controls.minDistance = next === 'follow' ? 3 : 22;
     controls.maxDistance = next === 'follow' ? 13 : 80;
-    controls.minPolarAngle = next === 'floor' ? 0.001 : 0.4;
+    // The overview starts angled but can tilt down to a top-down floor plan.
+    controls.minPolarAngle = next === 'overview' ? 0.001 : 0.4;
     controls.maxPolarAngle = next === 'follow' ? 1.35 : 1.15;
     if (next === 'follow') {
       controls.target.set(player.x, 1.65, player.z);
@@ -118,13 +119,7 @@ export function createCameraRig(
       );
     } else {
       controls.target.set(0, 0, 0);
-      orbit.position.set(
-        ...((next === 'floor' ? [0, 55, 0.1] : [19, 35, 43]) as [
-          number,
-          number,
-          number,
-        ]),
-      );
+      orbit.position.set(19, 35, 43);
     }
     controls.update();
     controls.enableDamping = true;

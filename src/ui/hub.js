@@ -75,13 +75,11 @@ export function createHub({ openLesson }) {
     world.setView(view);
     $('#hub').dataset.camera = view;
     $('#followViewBtn').setAttribute('aria-pressed', String(view === 'follow'));
-    $('#hallViewBtn').setAttribute('aria-pressed', String(view === 'hall'));
-    $('#floorViewBtn').setAttribute('aria-pressed', String(view === 'floor'));
+    $('#overviewBtn').setAttribute('aria-pressed', String(view === 'overview'));
   }
   $('#cameraBtn').addEventListener('click', () => setView('follow'));
   $('#followViewBtn').addEventListener('click', () => setView('follow'));
-  $('#hallViewBtn').addEventListener('click', () => setView('hall'));
-  $('#floorViewBtn').addEventListener('click', () => setView('floor'));
+  $('#overviewBtn').addEventListener('click', () => setView('overview'));
   function setPanel(open) {
     $('#hawkerPanel').hidden = !open;
     $('#hawkersToggle').setAttribute('aria-expanded', String(open));
