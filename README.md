@@ -32,7 +32,7 @@ The game is single-player and uses guided, authored lessons. There is no microph
 
 The full browser viewport is the 3D game. The logo, progress, lingo guide, sound controls and collapsible **Meet your hawkers** panel float over the hall. Lessons and dialogs are accessible HTML overlays over the same world. On smaller screens, open the hawker panel to choose a lesson or enable direct lessons.
 
-An octagonal footprint, eight radial walkways, shared tables and a central clock pavilion echo the supplied layout reference. The default **Follow** view plays like an action-adventure third-person game: your character accelerates, turns smoothly towards the direction you move, sprints and jumps, and the camera eases back behind them a moment after you stop dragging to look around. Sprinting widens the view slightly. Drag to orbit and scroll or pinch to zoom. The camera moves closer when a stall or the central pavilion blocks its view. **Hall view** and **Floor plan** remain available for orientation; reset returns to the follow camera. The three original stalls remain playable; five shuttered neighbours are decorative placeholders with no interactions or lessons:
+An octagonal footprint, eight radial walkways, shared tables and a central clock pavilion echo the supplied layout reference. The default **Follow** view plays like an action-adventure third-person game: your character accelerates, turns smoothly towards the direction you move, sprints and jumps, and the camera eases back behind them a moment after you stop dragging to look around. Sprinting widens the view slightly. Drag to orbit and scroll or pinch to zoom. The camera moves closer when a stall or the central pavilion blocks its view. **Overview** shows the whole hall from above for orientation; drag to tilt it down to a top-down floor plan, and reset returns to the follow camera. The three original stalls remain playable; five shuttered neighbours are decorative placeholders with no interactions or lessons:
 
 | Cuisine  | Coming-soon stall |
 | -------- | ----------------- |
@@ -70,6 +70,7 @@ Use the development server instead of opening `index.html` directly: browser mod
 | Visit a stall         | Click its counter or choose its lesson card; your avatar walks there      |
 | Talk nearby           | E / Enter, or the on-screen talk button                                   |
 | Look around           | Drag the scene; scroll or pinch to zoom                                   |
+| See the whole hall    | Overview button; drag to tilt down to a top-down floor plan               |
 | Reset camera          | Reset follow camera button                                                |
 | Learn without walking | Select “Skip the walk, start lessons directly”                            |
 | Place an order        | Click phrase chips, then Place order; Enter also submits outside a button |

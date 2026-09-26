@@ -76,7 +76,7 @@ export function createWorld(options: WorldOptions) {
   // Yaw first so the running lean tilts along the character's own forward axis.
   environment.player.person.rotation.order = 'YXZ';
   function render() {
-    environment.city.setCutaway(camera.position, rig.view === 'hall');
+    environment.city.setCutaway(camera.position, rig.view === 'overview');
     renderer.render(scene, camera);
   }
   const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');

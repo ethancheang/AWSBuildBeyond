@@ -55,12 +55,12 @@ for (const width of [1440, 390]) {
     await page.locator('#closeHawkers').click();
     await expect(page.locator('#hawkerPanel')).toBeHidden();
     await expect(page.locator('#hawkersToggle')).toBeFocused();
-    await page.locator('#floorViewBtn').click();
-    await expect(page.locator('#floorViewBtn')).toHaveAttribute(
+    await page.locator('#overviewBtn').click();
+    await expect(page.locator('#overviewBtn')).toHaveAttribute(
       'aria-pressed',
       'true',
     );
-    await page.screenshot({ path: `test-results/floor-plan-${width}.png` });
+    await page.screenshot({ path: `test-results/overview-${width}.png` });
     await page.locator('#cameraBtn').click();
     await expect(page.locator('#followViewBtn')).toHaveAttribute(
       'aria-pressed',
