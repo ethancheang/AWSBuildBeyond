@@ -26,7 +26,7 @@ All three stalls are open from the start. Each has six orders: the first few are
 - Points, up to three stars per stall, replay, and a completion badge.
 - A lingo guide, hawker etiquette tips, optional sound, and locally saved progress.
 
-The game is single-player and uses guided, authored lessons. There is no microphone requirement, account, backend, live AI, or paid API dependency.
+The game uses guided, authored single-player lessons. Optional multiplayer shares avatars in the hall through AppSync Events or a local WebSocket relay; see [multiplayer setup](docs/multiplayer.md). With no network configuration it remains fully single-player. There is no microphone requirement, account or live AI dependency.
 
 ## A hawker centre under one roof
 

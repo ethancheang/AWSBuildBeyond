@@ -471,5 +471,16 @@ export function buildEnvironment(scene: THREE.Scene) {
   you.position.set(0, 2.3, 0);
   player.person.add(you);
   scene.updateMatrixWorld(true);
-  return { floor, picks, markers, fans, player, cameraObstacles, city };
+  // character/label are also used to draw other players (see remotePlayers.ts).
+  return {
+    floor,
+    picks,
+    markers,
+    fans,
+    player,
+    cameraObstacles,
+    city,
+    character,
+    label,
+  };
 }

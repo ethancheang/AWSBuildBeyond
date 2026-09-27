@@ -4,6 +4,9 @@ import type { CameraView } from './camera';
 import { buildEnvironment } from './environment';
 import { findPath, moveWithCollision, STALL_POSITIONS, SPAWN } from './layout';
 import type { Point } from './layout';
+import { createRemotePlayers } from './remotePlayers';
+import { transportFromEnv } from '../net';
+import type { NetMessage, StateMessage } from '../net/protocol';
 import {
   createMotion,
   horizontalSpeed,
@@ -104,6 +107,69 @@ export function createWorld(options: WorldOptions) {
   const motion = createMotion();
   let jumpQueued = false,
     stride = 0;
+
+  const remotes = createRemotePlayers(scene, environment);
+  const makeTransport = transportFromEnv();
+  const me = {
+    id: crypto.randomUUID(),
+    name: (new URLSearchParams(location.search).get('name') || 'Guest').slice(
+      0,
+      16,
+    ),
+  };
+  const myState = (): StateMessage => ({
+    type: 'state',
+    id: me.id,
+    name: me.name,
+    color: '#2E86DE',
+    x: position.x,
+    z: position.z,
+    y: motion.y,
+    h: motion.heading,
+    m: options.isActive() && horizontalSpeed(motion) > 0.05,
+    busy: !options.isActive(),
+  });
+  function onNet(message: NetMessage) {
+    if (disposed || message.id === me.id) return;
+    if (message.type === 'hello') {
+      if (message.id === '__connected__') {
+        remotes.clear();
+        net?.send({ type: 'hello', id: me.id });
+      }
+      net?.send(myState());
+    } else if (message.type === 'leave') remotes.remove(message.id);
+    else remotes.upsert(message);
+  }
+  const net = makeTransport?.(onNet) ?? null;
+  let lastSent = 0,
+    lastState = '';
+  const netTimer = net
+    ? window.setInterval(() => {
+        const state = myState();
+        const serialized = JSON.stringify(state);
+        const now = performance.now();
+        if (serialized !== lastState || now - lastSent >= 2000) {
+          net.send(state);
+          lastState = serialized;
+          lastSent = now;
+        }
+      }, 100)
+    : 0;
+  window.addEventListener(
+    'pagehide',
+    () => {
+      net?.send({ type: 'leave', id: me.id });
+    },
+    { signal },
+  );
+  window.addEventListener(
+    'pageshow',
+    () => {
+      net?.send({ type: 'hello', id: me.id });
+      net?.send(myState());
+    },
+    { signal },
+  );
 
   function stop() {
     keys.clear();
@@ -346,6 +412,7 @@ export function createWorld(options: WorldOptions) {
         });
       }
     } else stop();
+    remotes.update(dt, reducedMotion.matches, rig.camera);
     rig.setEnabled(options.isActive());
     rig.update(dt, position, environment.cameraObstacles, {
       heading: motion.heading,
@@ -377,6 +444,10 @@ export function createWorld(options: WorldOptions) {
   function dispose() {
     if (disposed) return;
     disposed = true;
+    clearInterval(netTimer);
+    net?.send({ type: 'leave', id: me.id });
+    net?.close();
+    remotes.clear();
     abort.abort();
     resize.disconnect();
     rig.dispose();
