@@ -874,7 +874,7 @@ body[data-screen='title'] #world {
     padding: 10px 8px;
     gap: 8px;
   }
-  .map-help > span:not(.touch-help) {
+  .map-help > span:not(.touch-help, #multiplayerStatus) {
     display: none;
   }
   .touch-help {

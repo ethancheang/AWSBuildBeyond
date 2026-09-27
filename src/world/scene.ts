@@ -2,6 +2,10 @@ import * as THREE from 'three';
 import { createCameraRig } from './camera';
 import type { CameraView } from './camera';
 import { buildEnvironment } from './environment';
+import { createRemotePlayers } from './remotePlayers';
+import { transportFromEnv } from '../net';
+import { createSession } from '../net/session';
+import type { ConnectionStatus } from '../net/protocol';
 import { findPath, moveWithCollision, STALL_POSITIONS, SPAWN } from './layout';
 import type { Point } from './layout';
 import {
@@ -19,6 +23,7 @@ export interface WorldOptions {
   onNearby: (index: number) => void;
   onTip: (text: string) => void;
   onUnavailable: () => void;
+  onMultiplayer?: (status: ConnectionStatus, count: number) => void;
 }
 
 export function createWorld(options: WorldOptions) {
@@ -72,6 +77,7 @@ export function createWorld(options: WorldOptions) {
   sun.shadow.normalBias = 0.03;
   scene.add(sun);
   const environment = buildEnvironment(scene);
+  const remotes = createRemotePlayers(scene, environment);
   // Yaw first so the running lean tilts along the character's own forward axis.
   environment.player.person.rotation.order = 'YXZ';
   function render() {
@@ -104,6 +110,57 @@ export function createWorld(options: WorldOptions) {
   const motion = createMotion();
   let jumpQueued = false,
     stride = 0;
+  const makeTransport = transportFromEnv();
+  let session: ReturnType<typeof createSession> | undefined;
+  let joined = false;
+  let connectionStatus: ConnectionStatus = 'connecting';
+  function startMultiplayer() {
+    if (session || !makeTransport || disposed) return;
+    joined = true;
+    const params = new URLSearchParams(location.search);
+    session = createSession({
+      transport: makeTransport,
+      name:
+        params.get('name') ?? `Guest ${100 + Math.floor(Math.random() * 900)}`,
+      read: () => ({
+        x: position.x,
+        z: position.z,
+        y: options.isActive() ? motion.y : 0,
+        h: Math.atan2(Math.sin(motion.heading), Math.cos(motion.heading)),
+        m: options.isActive() && horizontalSpeed(motion) > 0.1,
+        busy: !options.isActive(),
+      }),
+      upsert: remotes.upsert,
+      remove: remotes.remove,
+      onStatus: (status) => {
+        connectionStatus = status;
+        options.onMultiplayer?.(status, remotes.count());
+      },
+    });
+  }
+  // Expiry also runs while a lesson has paused the render loop.
+  const presenceTimer = makeTransport
+    ? window.setInterval(() => {
+        remotes.prune();
+        if (session) options.onMultiplayer?.(connectionStatus, remotes.count());
+      }, 1000)
+    : undefined;
+  window.addEventListener(
+    'pagehide',
+    () => {
+      session?.close();
+      session = undefined;
+      remotes.clear();
+    },
+    { signal },
+  );
+  window.addEventListener(
+    'pageshow',
+    () => {
+      if (!disposed && joined) startMultiplayer();
+    },
+    { signal },
+  );
 
   function stop() {
     keys.clear();
@@ -353,9 +410,11 @@ export function createWorld(options: WorldOptions) {
       sprinting: keys.has('shift'),
       height: motion.y,
     });
+    remotes.update(dt, reducedMotion.matches, rig.camera);
     render();
   }
   function sync() {
+    if (!disposed && options.isActive()) startMultiplayer();
     const next = !document.hidden && options.isActive();
     if (!document.hidden && !disposed) {
       rig.update(0, position, environment.cameraObstacles);
@@ -366,6 +425,7 @@ export function createWorld(options: WorldOptions) {
     previousTime = performance.now();
     renderer.setAnimationLoop(next ? frame : null);
     if (!next) stop();
+    session?.publish();
   }
   function setCompleted(completed: boolean[]) {
     environment.markers.forEach((marker, i) => {
@@ -377,12 +437,15 @@ export function createWorld(options: WorldOptions) {
   function dispose() {
     if (disposed) return;
     disposed = true;
+    clearInterval(presenceTimer);
+    session?.close();
+    remotes.clear();
     abort.abort();
     resize.disconnect();
     rig.dispose();
     renderer.setAnimationLoop(null);
     const geometries = new Set<THREE.BufferGeometry>(),
-      materials = new Set<THREE.Material>(),
+      materials = new Set<THREE.Material>(environment.sharedMaterials.values()),
       textures = new Set<THREE.Texture>();
     scene.traverse((object) => {
       if (!(object instanceof THREE.Mesh)) return;

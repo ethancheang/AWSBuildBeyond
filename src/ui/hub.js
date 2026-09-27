@@ -41,6 +41,16 @@ export function createHub({ openLesson }) {
               $('#talkBtn').textContent = `Talk to ${LEVELS[index].npc}  ·  E`;
           },
           onUnavailable: fallback,
+          onMultiplayer: (status, count) => {
+            const badge = $('#multiplayerStatus');
+            badge.hidden = false;
+            badge.textContent =
+              status === 'connected'
+                ? `Shared hall · ${count + 1} here`
+                : status === 'connecting'
+                  ? 'Joining shared hall…'
+                  : 'Reconnecting…';
+          },
         });
         $('#worldStatus').hidden = true;
         world.setCompleted(LEVELS.map((l) => levelSave(l.id).done));
