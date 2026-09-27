@@ -1,0 +1,12 @@
+{
+  "name": "kopi-that-relay",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "node relay.js",
+    "test": "node --test relay.test.js"
+  },
+  "dependencies": {
+    "ws": "^8.18.0"
+  }
+}
