@@ -42,7 +42,7 @@ export function createWorld(options: WorldOptions) {
   canvas.tabIndex = 0;
   canvas.setAttribute(
     'aria-label',
-    '3D hawker centre. WASD or arrows to walk, Shift to sprint, Space to jump, E or Enter to talk. Drag to look around; in the isometric view, right-drag to rotate.',
+    '3D hawker centre. WASD or arrows to walk, Shift to sprint, Space to jump, E to talk. Drag to look around; in the isometric view, right-drag to rotate.',
   );
   canvas.setAttribute('aria-describedby', 'worldHelp');
   container.append(canvas);
@@ -137,6 +137,8 @@ export function createWorld(options: WorldOptions) {
     'pointerdown',
     (event) => {
       pointerStart = { x: event.clientX, y: event.clientY };
+      // Any press on the world, including a right-drag, takes keyboard focus.
+      canvas.focus({ preventScroll: true });
     },
     { signal },
   );
@@ -207,12 +209,7 @@ export function createWorld(options: WorldOptions) {
         event.preventDefault();
         if (!event.repeat) jumpQueued = true;
       }
-      if (
-        (key === 'e' || key === 'enter') &&
-        !target.closest('button, a') &&
-        nearby >= 0 &&
-        !event.repeat
-      ) {
+      if (key === 'e' && nearby >= 0 && !event.repeat) {
         event.preventDefault();
         options.onStall(nearby);
       }

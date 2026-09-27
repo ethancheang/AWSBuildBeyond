@@ -68,7 +68,7 @@ Use the development server instead of opening `index.html` directly: browser mod
 | Run                   | WASD / arrow keys, or click/tap a clear floor area                        |
 | Sprint / jump         | Hold Shift to sprint; Space to jump                                       |
 | Visit a stall         | Click its counter or choose its lesson card; your avatar walks there      |
-| Talk nearby           | E / Enter, or the on-screen talk button                                   |
+| Talk nearby           | E, or the on-screen talk button                                           |
 | Look around           | Drag the scene; scroll or pinch to zoom                                   |
 | Isometric view        | Isometric button; right-drag to rotate, scroll or pinch to zoom           |
 | Reset camera          | Reset follow camera button                                                |
