@@ -36,8 +36,6 @@ export function feedbackNotes(tokens, answer, lv, who) {
   }
   tokens
     .filter((t) => catOf(t) === 'stray')
-    .forEach((w) =>
-      notes.push(GLOSS[w].stray || `${tag(w)} doesn’t belong in this order.`),
-    );
+    .forEach((w) => notes.push(`${tag(w)} doesn’t belong in this order.`));
   return notes;
 }
