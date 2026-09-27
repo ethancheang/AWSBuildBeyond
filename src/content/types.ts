@@ -6,7 +6,6 @@ export interface Term {
   cat: string;
   short: string;
   long: string;
-  stray?: string;
 }
 export interface Avatar {
   skin?: string;

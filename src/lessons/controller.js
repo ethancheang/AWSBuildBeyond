@@ -507,7 +507,6 @@ export function createLessons({ show, backToHub, onEnter }) {
         lv,
       ) => `<h3>${lv.stall} (${lv.type.toLowerCase()})</h3><div class="formula">${formulaHTML(lv)}</div>
       <table class="gloss-table">${lv.chips
-        .filter((t) => LEVELS.indexOf(lv) === 0 || t !== 'Peng')
         .map(
           (t) =>
             `<tr><td>${tag(t)}</td><td><b>${GLOSS[t].short}</b><div class="d">${GLOSS[t].long}</div></td></tr>`,

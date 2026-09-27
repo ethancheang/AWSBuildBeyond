@@ -90,7 +90,7 @@ describe('ordering feedback', () => {
         ['Mee Pok', 'Dry', 'Chili'],
         LEVELS[1],
       ).join(' '),
-    ).toContain('drink lingo');
+    ).toContain('doesn’t belong');
   });
   it('accepts Malay word-order variants and optional greetings', () => {
     expect(

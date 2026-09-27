@@ -56,7 +56,6 @@ const GLOSS: Record<string, Term> = {
     cat: 'ice',
     short: 'Iced',
     long: 'From Hokkien 冰 (peng), "ice". Always goes last.',
-    stray: '“Peng” means iced. That’s drink lingo, not for noodles lah!',
   },
   'Mee Pok': {
     cat: 'noodle',
@@ -253,7 +252,6 @@ const LEVELS: Lesson[] = [
       'Soup',
       'Chili',
       'No Chili',
-      'Peng',
     ],
     intro: [
       'Come, Auntie teach you how to order fishball noodles!',
