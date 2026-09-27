@@ -102,7 +102,7 @@ export function createHub({ openLesson }) {
       return `<button class="lesson-card" data-li="${i}" aria-label="${lv.title} with ${lv.npc}, ${progress.done ? 'done' : 'new'}">
         <div class="lc-icon">${artFor(lv, lv.example.tokens)}</div>
         <div><div class="lc-stall">STALL 0${STALLS.findIndex((stall) => stall.lessonIndex === i) + 1} · ${lv.type}</div><div class="lc-title">${lv.title}</div><div class="lc-npc">${lv.npc} <span aria-hidden="true">↗</span></div></div>
-        <div class="lc-right"><span class="stars" aria-label="${progress.stars} of 3 stars">${starsHTML(progress.stars)}</span><span class="badge ${progress.done ? 'b-done' : ''}">${progress.done ? 'Completed' : '6 customers'}</span></div></button>`;
+        <div class="lc-right"><span class="stars" aria-label="${progress.stars} of 3 stars">${starsHTML(progress.stars)}</span><span class="badge ${progress.done ? 'b-done' : ''}">${progress.done ? 'Completed' : '6 orders'}</span></div></button>`;
     }).join('');
     $$('.lesson-card').forEach((button) =>
       button.addEventListener('click', () => visit(Number(button.dataset.li))),

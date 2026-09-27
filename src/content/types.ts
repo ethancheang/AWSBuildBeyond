@@ -27,8 +27,15 @@ export interface ConversationStage {
   a: string[];
   chips: string[];
 }
-export interface CustomerPrompt {
-  c: { name: string; tag: string; av: Avatar };
+/** A friend who asks the player to buy something for them. */
+export interface Friend {
+  name: string;
+  tag: string;
+  av: Avatar;
+}
+/** One order the player places as the customer: their own craving, or an errand. */
+export interface OrderPrompt {
+  friend?: Friend;
   q: string;
   a: string[];
   stages?: ConversationStage[];
@@ -55,5 +62,5 @@ export interface Lesson {
   next: string[];
   praise: string[];
   comfort: string[];
-  prompts: CustomerPrompt[];
+  prompts: OrderPrompt[];
 }

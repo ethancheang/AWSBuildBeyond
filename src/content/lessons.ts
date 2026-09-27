@@ -4,6 +4,7 @@ import type {
   Term,
   Lesson,
   ConversationStage,
+  Friend,
 } from './types';
 const CATS: Record<string, Category> = {
   base: { label: 'Drink', color: '#8b5a2b' },
@@ -75,7 +76,7 @@ const GLOSS: Record<string, Term> = {
   'Bee Hoon': {
     cat: 'noodle',
     short: 'Thin rice vermicelli',
-    long: '米粉. Very thin white rice noodles. Nice, but no customer here is asking for it.',
+    long: '米粉. Very thin white rice noodles. Nice, but none of these orders needs it.',
   },
   Dry: {
     cat: 'style',
@@ -170,28 +171,25 @@ const LEVELS: Lesson[] = [
     comfort: [
       'No problem, everybody also like that at first.',
       'Relax, try again. Uncle not in a rush.',
-      'Almost there. Listen to what the customer wants.',
+      'Almost there. Check each part of the order.',
     ],
     prompts: [
       {
-        c: {
-          name: 'Mr Tan',
-          tag: 'retired regular',
-          av: {
-            skin: '#eab893',
-            hair: '#bdbdbd',
-            style: 'bald',
-            shirt: '#8fb3d9',
-            glasses: true,
-          },
-        },
-        q: 'Morning! Just the usual. Hot coffee, with the sweet condensed milk.',
+        q: 'Your first morning in Singapore. You want a hot coffee the classic local way, with sweet condensed milk.',
         a: ['Kopi'],
       },
       {
-        c: {
+        q: 'You fancy a hot tea with condensed milk, but not so sweet. You’re cutting down.',
+        a: ['Teh', 'Siew Dai'],
+      },
+      {
+        q: 'Wah, 34 degrees outside. You want black coffee, no milk but with sugar, and iced.',
+        a: ['Kopi', 'O', 'Peng'],
+      },
+      {
+        friend: {
           name: 'Priya',
-          tag: 'office worker',
+          tag: 'your friend from work',
           av: {
             skin: '#b9774f',
             hair: '#1b1512',
@@ -199,42 +197,13 @@ const LEVELS: Lesson[] = [
             shirt: '#7a4fd1',
           },
         },
-        q: 'Hot tea with condensed milk, please. But not so sweet ah, I’m cutting down.',
-        a: ['Teh', 'Siew Dai'],
-      },
-      {
-        c: {
-          name: 'Ah Boy',
-          tag: 'NSF on book-out day',
-          av: {
-            skin: '#d9a57c',
-            hair: '#1b1512',
-            style: 'short',
-            shirt: '#56733f',
-          },
-        },
-        q: 'Wah, 34 degrees today. Black coffee, no milk but got sugar, and with ice!',
-        a: ['Kopi', 'O', 'Peng'],
-      },
-      {
-        c: {
-          name: 'Mdm Wong',
-          tag: 'health-conscious auntie',
-          av: {
-            skin: '#f0c7a0',
-            hair: '#4a4a4a',
-            style: 'short',
-            shirt: '#e85d9c',
-            glasses: true,
-          },
-        },
-        q: 'Coffee with evaporated milk. Zero sugar, doctor’s orders.',
+        q: 'Eh, help me buy one? Coffee with evaporated milk. Zero sugar ah, doctor’s orders.',
         a: ['Kopi', 'C', 'Kosong'],
       },
       {
-        c: {
+        friend: {
           name: 'Sarah',
-          tag: 'exchange student',
+          tag: 'your housemate',
           av: {
             skin: '#f6d5bf',
             hair: '#d9a441',
@@ -242,22 +211,21 @@ const LEVELS: Lesson[] = [
             shirt: '#2e86de',
           },
         },
-        q: 'Could I get iced tea with no milk and no sugar at all?',
+        q: 'Could you grab me an iced tea? No milk and no sugar at all, please!',
         a: ['Teh', 'O', 'Kosong', 'Peng'],
       },
       {
-        c: {
-          name: 'Boss Chua',
-          tag: 'lunch-hour rusher',
+        friend: {
+          name: 'Ah Boy',
+          tag: 'your friend, on book-out day',
           av: {
-            skin: '#e6b48d',
+            skin: '#d9a57c',
             hair: '#1b1512',
             style: 'short',
-            shirt: '#ffffff',
-            tie: '#e04b3a',
+            shirt: '#56733f',
           },
         },
-        q: 'Black coffee, no milk. Less sugar. Iced. Quick quick, meeting at two!',
+        q: 'Bro, buy me one also. Black coffee, no milk, less sugar, iced. Quick quick, movie starts at two!',
         a: ['Kopi', 'O', 'Siew Dai', 'Peng'],
       },
     ],
@@ -317,28 +285,22 @@ const LEVELS: Lesson[] = [
     ],
     comfort: [
       'Never mind, try again. Auntie patient one.',
-      'Close already! Listen carefully to the customer.',
+      'Close already! Say it again slowly.',
       'Aiyo, small mistake only.',
     ],
     prompts: [
       {
-        c: {
-          name: 'Jun Wei',
-          tag: 'poly student',
-          av: {
-            skin: '#f0c49c',
-            hair: '#1b1512',
-            style: 'fringe',
-            shirt: '#f28c28',
-          },
-        },
-        q: 'Flat yellow egg noodles, dry, with chili. Make it shiok!',
+        q: 'Lunchtime! You want flat yellow egg noodles, tossed dry, with chili.',
         a: ['Mee Pok', 'Dry', 'Chili'],
       },
       {
-        c: {
-          name: 'Mrs Lee',
-          tag: 'ordering for her four-year-old',
+        q: 'Rainy day. You feel like flat white rice noodles in soup, with chili. You like it spicy.',
+        a: ['Hor Fun', 'Soup', 'Chili'],
+      },
+      {
+        friend: {
+          name: 'Rachel',
+          tag: 'your friend, lunching with her four-year-old',
           av: {
             skin: '#f3cfae',
             hair: '#5a3a22',
@@ -346,28 +308,13 @@ const LEVELS: Lesson[] = [
             shirt: '#1f8a5b',
           },
         },
-        q: 'For my girl: the thin yellow egg noodles, in soup. No chili please, she’s only four.',
+        q: 'Help me order for my girl? The thin yellow egg noodles, in soup. No chili please, she’s only four.',
         a: ['Mee Kia', 'Soup', 'No Chili'],
       },
       {
-        c: {
-          name: 'Mr Kumar',
-          tag: 'taxi uncle',
-          av: {
-            skin: '#8d5a3b',
-            hair: '#1b1512',
-            style: 'short',
-            shirt: '#ffc93c',
-            mustache: true,
-          },
-        },
-        q: 'Flat white rice noodles in soup. Add chili, I like it spicy.',
-        a: ['Hor Fun', 'Soup', 'Chili'],
-      },
-      {
-        c: {
+        friend: {
           name: 'Mei Ling',
-          tag: 'nurse on a break',
+          tag: 'your friend, a nurse on her break',
           av: {
             skin: '#f4d0b0',
             hair: '#1b1512',
@@ -375,28 +322,27 @@ const LEVELS: Lesson[] = [
             shirt: '#6ec6ca',
           },
         },
-        q: 'Thin egg noodles, tossed dry. No chili, I cannot take spice.',
+        q: 'I’ll chope the table. Get me thin egg noodles, tossed dry. No chili, I cannot take spice.',
         a: ['Mee Kia', 'Dry', 'No Chili'],
       },
       {
-        c: {
-          name: 'Grandpa Ong',
-          tag: 'morning exercise group',
+        friend: {
+          name: 'Jun Wei',
+          tag: 'your friend from uni',
           av: {
-            skin: '#e6b58f',
-            hair: '#e0e0e0',
-            style: 'bald',
-            shirt: '#c9b79c',
-            glasses: true,
+            skin: '#f0c49c',
+            hair: '#1b1512',
+            style: 'fringe',
+            shirt: '#f28c28',
           },
         },
-        q: 'The flat yellow egg noodles, in soup. Don’t want chili.',
+        q: 'Sore throat today. Flat yellow egg noodles in soup for me. Don’t want chili.',
         a: ['Mee Pok', 'Soup', 'No Chili'],
       },
       {
-        c: {
+        friend: {
           name: 'Chloe',
-          tag: 'food blogger',
+          tag: 'your friend, a food blogger',
           av: {
             skin: '#f5d3b8',
             hair: '#2a211b',
@@ -405,14 +351,14 @@ const LEVELS: Lesson[] = [
             shirt: '#ffffff',
           },
         },
-        q: 'Flat white rice noodles, but tossed dry, with chili. It photographs better!',
+        q: 'Flat white rice noodles for me, but tossed dry, with chili. It photographs better!',
         a: ['Hor Fun', 'Dry', 'Chili'],
       },
     ],
   },
 ];
 
-// Nasi lemak: short exchanges, with scoring once per customer.
+// Nasi lemak: short exchanges, with scoring once per complete order.
 Object.assign(CATS, {
   meal: { label: 'Meal', color: '#23856b' },
   chicken: { label: 'Chicken', color: '#b86924' },
@@ -538,55 +484,82 @@ const nasiDining = (term: string): ConversationStage => ({
   a: [term],
   chips: ['Makan sini', 'Bungkus'],
 });
-const nasiScenarios: [string, string, boolean, boolean, string, string][] = [
-  [
-    'A first visit',
-    'One basic nasi lemak, regular sambal, no extra egg. Eat here.',
-    false,
-    false,
-    'Sambal biasa',
-    'Makan sini',
-  ],
-  [
-    'Lunch break',
-    'One nasi lemak with fried chicken, regular sambal, no extra egg. Eat here.',
-    true,
-    false,
-    'Sambal biasa',
-    'Makan sini',
-  ],
-  [
-    'An extra egg',
-    'One basic nasi lemak with one extra egg, regular sambal. Eat here.',
-    false,
-    true,
-    'Sambal biasa',
-    'Makan sini',
-  ],
-  [
-    'Just a little',
-    'One basic nasi lemak with a little sambal, no extra egg. Eat here.',
-    false,
-    false,
-    'Sambal sikit',
-    'Makan sini',
-  ],
-  [
-    'Taking lunch home',
-    'One basic nasi lemak, no sambal and no extra egg. Takeaway.',
-    false,
-    false,
-    'Tak nak sambal',
-    'Bungkus',
-  ],
-  [
-    'The full order',
-    'One nasi lemak with fried chicken and one extra egg. Pack the sambal separately. Takeaway.',
-    true,
-    true,
-    'Sambal asing',
-    'Bungkus',
-  ],
+interface NasiScenario {
+  q: string;
+  friend?: Friend;
+  chicken: boolean;
+  egg: boolean;
+  sambal: string;
+  dining: string;
+}
+const nasiScenarios: NasiScenario[] = [
+  {
+    q: 'Your first nasi lemak! You want one basic set, regular sambal, no extra egg. You’ll eat here.',
+    chicken: false,
+    egg: false,
+    sambal: 'Sambal biasa',
+    dining: 'Makan sini',
+  },
+  {
+    q: 'Lunch break. You want nasi lemak with fried chicken, regular sambal, no extra egg. Eat here.',
+    chicken: true,
+    egg: false,
+    sambal: 'Sambal biasa',
+    dining: 'Makan sini',
+  },
+  {
+    q: 'Very hungry today: one basic nasi lemak with one extra egg, regular sambal. Eat here.',
+    chicken: false,
+    egg: true,
+    sambal: 'Sambal biasa',
+    dining: 'Makan sini',
+  },
+  {
+    friend: {
+      name: 'Farah',
+      tag: 'your friend from work',
+      av: { skin: '#c68e63', hair: '#2a211b', style: 'long', shirt: '#e85d9c' },
+    },
+    q: 'Can I join you? Buy me one basic nasi lemak, just a little sambal, no extra egg. I’ll sit with you.',
+    chicken: false,
+    egg: false,
+    sambal: 'Sambal sikit',
+    dining: 'Makan sini',
+  },
+  {
+    friend: {
+      name: 'Daniel',
+      tag: 'your housemate',
+      av: {
+        skin: '#e8b994',
+        hair: '#5a3a22',
+        style: 'short',
+        shirt: '#69a8b2',
+      },
+    },
+    q: 'Can you buy one back for me? Basic nasi lemak, no sambal and no extra egg.',
+    chicken: false,
+    egg: false,
+    sambal: 'Tak nak sambal',
+    dining: 'Bungkus',
+  },
+  {
+    friend: {
+      name: 'Hafiz',
+      tag: 'your friend from football',
+      av: {
+        skin: '#a8714c',
+        hair: '#1b1512',
+        style: 'fringe',
+        shirt: '#ffc93c',
+      },
+    },
+    q: 'Big match tonight! Nasi lemak with fried chicken and one extra egg. Sambal packed separately, and to take away.',
+    chicken: true,
+    egg: true,
+    sambal: 'Sambal asing',
+    dining: 'Bungkus',
+  },
 ];
 LEVELS.push({
   id: 'nasi',
@@ -626,12 +599,8 @@ LEVELS.push({
   next: ['Welcome! What would you like?'],
   praise: ['Your meal is ready. Enjoy!'],
   comfort: ['No worries. Let’s try that part again.'],
-  prompts: nasiScenarios.map(([name, q, chicken, egg, sambal, dining]) => ({
-    c: {
-      name,
-      tag: 'nasi lemak customer',
-      av: { skin: '#e8b994', style: 'short', shirt: '#69a8b2' },
-    },
+  prompts: nasiScenarios.map(({ q, friend, chicken, egg, sambal, dining }) => ({
+    friend,
     q,
     stages: [
       nasiOrder(chicken),
@@ -657,4 +626,18 @@ const HUB_TIPS = [
   'Unsure? Point and say the drink first. The uncle will ask the rest.',
 ];
 
-export { CATS, GLOSS, LEVELS, NASI_BASE, HUB_TIPS };
+// Matches the player's 3D character.
+const PLAYER_AV: Avatar = {
+  skin: '#EDBD96',
+  hair: '#343934',
+  style: 'short',
+  shirt: '#D32F2F',
+};
+const FRIEND_THANKS = [
+  'Thanks ah! Next round on me.',
+  'Wah, exactly what I wanted. Thank you!',
+  'Shiok, I owe you one!',
+  'Steady lah, you order like a local already.',
+];
+
+export { CATS, GLOSS, LEVELS, NASI_BASE, HUB_TIPS, PLAYER_AV, FRIEND_THANKS };

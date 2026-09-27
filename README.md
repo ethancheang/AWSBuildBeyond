@@ -4,7 +4,7 @@
 
 Kopi That! helps newcomers feel at home in Singapore, one food order at a time. Explore a welcoming 3D hawker centre, meet the people behind the counters, and practise the words you will actually use when ordering lunch.
 
-A phrasebook can translate “coffee.” Kopi That! lets you work out **“Kopi O Siew Dai Peng”** in context: black coffee, less sugar, iced. Customers describe what they want; you assemble an order, see what it means, and get friendly feedback from the hawker. Mistakes are opportunities to practise, with no queue waiting behind you.
+A phrasebook can translate “coffee.” Kopi That! lets you work out **“Kopi O Siew Dai Peng”** in context: black coffee, less sugar, iced. You are the customer: you queue up with a craving of your own, or an errand for a friend, assemble the order in local lingo, see what it means, and get friendly feedback from the hawker. Say it wrong and you see what you would actually be handed. Mistakes are opportunities to practise, with no queue waiting behind you.
 
 The setting is a stylised **Lau Pa Sat-inspired hall**, with Singapore's food culture, everyday Singlish ordering vocabulary, and a distinct conversational Malay lesson. It is an original procedural environment, not an architectural reconstruction or an official representation of the venue.
 
@@ -18,7 +18,7 @@ The setting is a stylised **Lau Pa Sat-inspired hall**, with Singapore's food cu
 | Mei Mei Fishball Noodle | Auntie Mei | Noodle types, dry or soup, and chilli preferences                  |
 | Dapur Aisyah            | Kak Aisyah | A Malay conversation about nasi lemak, extras, sambal and takeaway |
 
-All three stalls are open from the start. Each has six customers, with:
+All three stalls are open from the start. Each has six orders: the first few are your own cravings, and the rest are errands for named friends. Lessons include:
 
 - Clickable phrase chips, hover/focus/long-press definitions, and live food illustrations.
 - Hints, undo, clear, retries, and explanations for incorrect choices or word order.
@@ -113,7 +113,7 @@ npx playwright install chromium
 npm run test:e2e       # Browser tests; starts the local server when needed
 ```
 
-Browser tests run sequentially to avoid several software-rendered 3D contexts competing for the same machine. They include all 18 customers, the Malay conversation stages, saved progress, reset, hints/retries, mobile overlay layout, camera controls, placeholder separation, navigation and WebGL fallback.
+Browser tests run sequentially to avoid several software-rendered 3D contexts competing for the same machine. They include all 18 orders, the Malay conversation stages, saved progress, reset, hints/retries, mobile overlay layout, camera controls, placeholder separation, navigation and WebGL fallback.
 
 GitHub Actions runs these checks for pushes and pull requests.
 
@@ -128,7 +128,7 @@ Deploy the generated `dist/` folder to a static host such as Amazon S3 with Clou
 
 ### Content and progress
 
-Keep vocabulary, example orders and customer scenarios in `src/content/`; do not put new lesson rules into the scene. Every answer term must have a glossary entry, category and available chip. Malay stages are scored once per complete customer order. Add regression coverage when introducing a new ordering rule.
+Keep vocabulary, example orders, cravings and friend errands in `src/content/`; do not put new lesson rules into the scene. Every answer term must have a glossary entry, category and available chip. Malay stages are scored once per complete order. Add regression coverage when introducing a new ordering rule.
 
 Progress uses the original `hawker-lingo-v1` local-storage key and lesson IDs (`drinks`, `noodles`, `nasi`). Existing valid progress is retained **when served from the same browser origin**. Moving from a `file://` prototype to localhost, or between ports/domains, does not transfer browser storage automatically. Clearing site data removes progress; there is no cross-device sync. If browser storage is unavailable, the game continues with in-memory progress for that session.
 

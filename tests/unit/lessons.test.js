@@ -4,7 +4,7 @@ import { LEVELS, GLOSS, CATS } from '../../src/content/lessons.ts';
 import { evaluate, nasiCheck } from '../../src/domain/evaluation.ts';
 
 describe('original lesson coverage', () => {
-  it('retains all three stalls and eighteen customers', () => {
+  it('retains all three stalls and eighteen orders', () => {
     expect(LEVELS.map((level) => level.id)).toEqual([
       'drinks',
       'noodles',
@@ -35,6 +35,26 @@ describe('original lesson coverage', () => {
   }
 });
 
+describe('the player is always the customer', () => {
+  it('opens each stall with your own cravings, then errands for friends', () => {
+    for (const level of LEVELS) {
+      const errands = level.prompts.map((prompt) => !!prompt.friend);
+      expect(errands[0]).toBe(false);
+      expect(errands.at(-1)).toBe(true);
+      // Once errands start, every later order is for a friend.
+      expect(errands.slice(errands.indexOf(true)).every(Boolean)).toBe(true);
+    }
+  });
+  it('names each friend and how you know them', () => {
+    for (const level of LEVELS)
+      for (const { friend } of level.prompts)
+        if (friend) {
+          expect(friend.name).toBeTruthy();
+          expect(friend.tag).toMatch(/^your /);
+        }
+  });
+});
+
 describe('ordering feedback', () => {
   const drinks = LEVELS[0];
   it('accepts reordered words with guidance but no perfect score', () => {
@@ -49,6 +69,14 @@ describe('ordering feedback', () => {
     expect(feedbackNotes(['Kopi', 'O'], ['Kopi'], drinks).join(' ')).toContain(
       'Not needed',
     );
+  });
+  it('speaks to you, or names the friend the order is for', () => {
+    expect(feedbackNotes(['Kopi'], ['Kopi', 'O'], drinks).join(' ')).toContain(
+      'You wanted that',
+    );
+    const errand = feedbackNotes(['Teh'], ['Kopi'], drinks, 'Priya').join(' ');
+    expect(errand).toContain('Priya wanted');
+    expect(errand).not.toContain('customer');
   });
   it('rejects drink-only words at the noodle stall', () => {
     const result = evaluate(
