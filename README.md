@@ -32,7 +32,7 @@ The game is single-player and uses guided, authored lessons. There is no microph
 
 The full browser viewport is the 3D game. The logo, progress, lingo guide, sound controls and collapsible **Meet your hawkers** panel float over the hall. Lessons and dialogs are accessible HTML overlays over the same world. On smaller screens, open the hawker panel to choose a lesson or enable direct lessons.
 
-An octagonal footprint, eight radial walkways, shared tables and a central clock pavilion echo the supplied layout reference. The default **Follow** view plays like an action-adventure third-person game: your character accelerates, turns smoothly towards the direction you move, sprints and jumps, and the camera eases back behind them a moment after you stop dragging to look around. Sprinting widens the view slightly. Drag to orbit and scroll or pinch to zoom. The camera moves closer when a stall or the central pavilion blocks its view. **Overview** shows the whole hall from above for orientation; drag to tilt it down to a top-down floor plan, and reset returns to the follow camera. The three original stalls remain playable; five shuttered neighbours are decorative placeholders with no interactions or lessons:
+An octagonal footprint, eight radial walkways, shared tables and a central clock pavilion echo the supplied layout reference. The default **Follow** view plays like an action-adventure third-person game: your character accelerates, turns smoothly towards the direction you move, sprints and jumps, and the camera eases back behind them a moment after you stop dragging to look around. Sprinting widens the view slightly. Drag to orbit and scroll or pinch to zoom. The camera moves closer when a stall or the central pavilion blocks its view. **Isometric** switches to a Kyoto-style isometric diorama: a parallel projection at a fixed isometric angle that follows your character. Right-drag (or drag on touch) rotates it around you, scroll or pinch zooms, and left click still walks. Reset returns to the follow camera. The three original stalls remain playable; five shuttered neighbours are decorative placeholders with no interactions or lessons:
 
 | Cuisine  | Coming-soon stall |
 | -------- | ----------------- |
@@ -42,7 +42,7 @@ An octagonal footprint, eight radial walkways, shared tables and a central clock
 | Japanese | Don Say Bojio     |
 | Korean   | Seoul Shiok       |
 
-A surrounding fictional city district adds glass towers, planted sky terraces, low-rise shopfronts, tropical trees and palms, planters, pavements, crossings, streetlights and cars. The city surrounds the hall in third person; the overview cuts away foreground buildings to keep the playable area visible. The backdrop is decorative, with walking confined to the hawker hall.
+A surrounding fictional city district adds glass towers, planted sky terraces, low-rise shopfronts, tropical trees and palms, planters, pavements, crossings, streetlights and cars. The city surrounds the hall in third person; the isometric view cuts away foreground buildings to keep the playable area visible. The backdrop is decorative, with walking confined to the hawker hall.
 
 Normal reading text inherits browser font sizes, including the browser’s preferred default text size. Panels wrap and scroll to accommodate it; only headings, the logo and decorative icons retain display sizing.
 
@@ -70,7 +70,7 @@ Use the development server instead of opening `index.html` directly: browser mod
 | Visit a stall         | Click its counter or choose its lesson card; your avatar walks there      |
 | Talk nearby           | E / Enter, or the on-screen talk button                                   |
 | Look around           | Drag the scene; scroll or pinch to zoom                                   |
-| See the whole hall    | Overview button; drag to tilt down to a top-down floor plan               |
+| Isometric view        | Isometric button; right-drag to rotate, scroll or pinch to zoom           |
 | Reset camera          | Reset follow camera button                                                |
 | Learn without walking | Select “Skip the walk, start lessons directly”                            |
 | Place an order        | Click phrase chips, then Place order; Enter also submits outside a button |

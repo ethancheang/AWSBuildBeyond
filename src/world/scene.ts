@@ -42,12 +42,11 @@ export function createWorld(options: WorldOptions) {
   canvas.tabIndex = 0;
   canvas.setAttribute(
     'aria-label',
-    '3D hawker centre. WASD or arrows to walk, Shift to sprint, Space to jump, E or Enter to talk. Drag to look around.',
+    '3D hawker centre. WASD or arrows to walk, Shift to sprint, Space to jump, E or Enter to talk. Drag to look around; in the isometric view, right-drag to rotate.',
   );
   canvas.setAttribute('aria-describedby', 'worldHelp');
   container.append(canvas);
   const rig = createCameraRig(camera, canvas, SPAWN);
-  const controls = rig.controls;
   const setView = (view: CameraView) => {
     if (disposed) return;
     rig.setView(view, position, motion.heading);
@@ -76,8 +75,8 @@ export function createWorld(options: WorldOptions) {
   // Yaw first so the running lean tilts along the character's own forward axis.
   environment.player.person.rotation.order = 'YXZ';
   function render() {
-    environment.city.setCutaway(camera.position, rig.view === 'overview');
-    renderer.render(scene, camera);
+    environment.city.setCutaway(rig.camera.position, rig.view === 'isometric');
+    renderer.render(scene, rig.camera);
   }
   const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
   const keys = new Set<string>();
@@ -159,7 +158,7 @@ export function createWorld(options: WorldOptions) {
         ((event.clientX - bounds.left) / bounds.width) * 2 - 1,
         1 - ((event.clientY - bounds.top) / bounds.height) * 2,
       );
-      raycaster.setFromCamera(pointer, camera);
+      raycaster.setFromCamera(pointer, rig.camera);
       const hit = raycaster.intersectObjects(environment.picks, true)[0];
       if (!hit) return;
       let object: THREE.Object3D | null = hit.object;
@@ -270,10 +269,10 @@ export function createWorld(options: WorldOptions) {
         Number(keys.has('s') || keys.has('arrowdown')) -
         Number(keys.has('w') || keys.has('arrowup'));
       if (x || z) {
-        camera.getWorldDirection(forward);
+        rig.camera.getWorldDirection(forward);
         forward.y = 0;
         forward.normalize();
-        right.crossVectors(forward, camera.up).normalize();
+        right.crossVectors(forward, rig.camera.up).normalize();
         const v = right
           .clone()
           .multiplyScalar(x)
@@ -350,7 +349,7 @@ export function createWorld(options: WorldOptions) {
         });
       }
     } else stop();
-    controls.enabled = options.isActive();
+    rig.setEnabled(options.isActive());
     rig.update(dt, position, environment.cameraObstacles, {
       heading: motion.heading,
       speed: horizontalSpeed(motion),
