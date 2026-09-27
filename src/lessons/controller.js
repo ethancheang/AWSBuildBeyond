@@ -1,6 +1,13 @@
 import { feedbackNotes } from '../ui/feedback.js';
 import { $, $$, shuffle, pick } from '../shared/dom.js';
-import { LEVELS, GLOSS, CATS, NASI_BASE } from '../content/lessons.ts';
+import {
+  LEVELS,
+  GLOSS,
+  CATS,
+  NASI_BASE,
+  PLAYER_AV,
+  FRIEND_THANKS,
+} from '../content/lessons.ts';
 import { avatarSVG } from '../art/avatar.js';
 import { artFor, infoFor, nasiSVG } from '../art/food.js';
 import { save, persist, levelSave } from '../state/progress.ts';
@@ -16,6 +23,26 @@ import {
 import { evaluate, nasiCheck } from '../domain/evaluation.ts';
 import { scoreOrder, lessonStars } from '../domain/scoring.ts';
 export function createLessons({ show, backToHub, onEnter }) {
+  /** The player is always the customer; errands are ordered for a friend. */
+  function friend() {
+    return L.lv.prompts[L.idx].friend;
+  }
+  function wanted() {
+    return friend() ? `${friend().name} wanted` : 'You wanted';
+  }
+  function thanksHTML() {
+    const f = friend();
+    return f
+      ? `<p class="npc-say"><b>${f.name}:</b> “${pick(FRIEND_THANKS)}”</p>`
+      : '';
+  }
+  /** Whether the hawker has enough to make something from these words. */
+  function canServe(lv, tokens) {
+    const cats = tokens.map((t) => GLOSS[t].cat);
+    return lv.kind === 'drink'
+      ? cats.includes('base')
+      : ['noodle', 'style', 'chili'].every((c) => cats.includes(c));
+  }
   function nasiStage() {
     return L.lv.prompts[L.idx].stages[L.stage];
   }
@@ -38,7 +65,7 @@ export function createLessons({ show, backToHub, onEnter }) {
       SFX.bad();
       const wrong = L.tokens.filter((t) => !['Kak', 'Saya nak'].includes(t));
       openModal(
-        `<h2>Let’s adjust that part</h2><p>You chose: ${wrong.length ? wrong.map((t) => `${tag(t)} — ${GLOSS[t].short}`).join('; ') : 'only a greeting'}.</p><p>The customer needs: ${st.a.map((t) => `${tag(t)} — ${GLOSS[t].short}`).join('; ')}.</p><p>Your earlier replies are kept.</p><button class="btn primary" data-act="retry" data-primary>Try again</button>`,
+        `<h2>Let’s adjust that part</h2><p>You chose: ${wrong.length ? wrong.map((t) => `${tag(t)} — ${GLOSS[t].short}`).join('; ') : 'only a greeting'}.</p><p>${wanted()}: ${st.a.map((t) => `${tag(t)} — ${GLOSS[t].short}`).join('; ')}.</p><p>Your earlier replies are kept.</p><button class="btn primary" data-act="retry" data-primary>Try again</button>`,
         {
           retry: () => {
             closeModal();
@@ -71,7 +98,7 @@ export function createLessons({ show, backToHub, onEnter }) {
       else nextPrompt();
     };
     openModal(
-      `<div class="center"><div class="served">${nasiSVG(L.accepted)}</div><h2>Swee! Order coming right up!</h2><p>Kak Aisyah: “Your meal is ready. Enjoy!”</p><p>${L.accepted.map((t) => GLOSS[t].short).join(' · ')}</p><div class="pts">+${pts} pts ${star ? '★ perfect' : ''}</div><p>Say thank you: <b>Terima kasih</b>. This does not affect your score.</p><div class="row-btns"><button class="btn primary" data-act="thanks" data-primary>Terima kasih — Thank you</button><button class="btn ghost" data-act="next">${L.idx === L.lv.prompts.length - 1 ? 'Finish lesson' : 'Next customer'}</button></div></div>`,
+      `<div class="center"><div class="served">${nasiSVG(L.accepted)}</div><h2>Swee! Order coming right up!</h2><p>Kak Aisyah: “Your meal is ready. Enjoy!”</p><p>${L.accepted.map((t) => GLOSS[t].short).join(' · ')}</p><div class="pts">+${pts} pts ${star ? '★ perfect' : ''}</div>${thanksHTML()}<p>Say thank you: <b>Terima kasih</b>. This does not affect your score.</p><div class="row-btns"><button class="btn primary" data-act="thanks" data-primary>Terima kasih — Thank you</button><button class="btn ghost" data-act="next">${L.idx === L.lv.prompts.length - 1 ? 'Finish lesson' : 'Next order'}</button></div></div>`,
       { thanks: next, next, close: next },
     );
   }
@@ -120,7 +147,7 @@ export function createLessons({ show, backToHub, onEnter }) {
     <h3 style="margin-top:0">How the order goes</h3>
     <div class="formula">${formulaHTML(lv)}</div>
     <div class="example">${artFor(lv, lv.example.tokens)}<div><div class="said">“${phrase(lv.example.tokens)}”</div><p>means ${lv.example.meaning}</p></div></div>
-    <div class="row-btns"><button class="btn primary" data-act="start" data-primary>Start taking orders</button></div>`,
+    <div class="row-btns"><button class="btn primary" data-act="start" data-primary>Join the queue</button></div>`,
       {
         start: () => {
           closeModal();
@@ -141,10 +168,13 @@ export function createLessons({ show, backToHub, onEnter }) {
     L.hinted = false;
     L.stage = 0;
     L.accepted = [];
-    $('#custPortrait').innerHTML = avatarSVG(p.c.av);
-    $('#custName').textContent = p.c.name;
-    $('#custTag').textContent = p.c.tag;
-    $('#custQuote').textContent = `“${p.q}”`;
+    $('#custCraving').textContent = p.friend
+      ? 'Errand for a friend'
+      : 'Your craving';
+    $('#custPortrait').innerHTML = avatarSVG(p.friend?.av ?? PLAYER_AV);
+    $('#custName').textContent = p.friend?.name ?? 'You';
+    $('#custTag').textContent = p.friend?.tag ?? 'next in the queue';
+    $('#custQuote').textContent = p.friend ? `“${p.q}”` : p.q;
     const cc = $('#custCard');
     cc.classList.remove('enter');
     void cc.offsetWidth;
@@ -176,7 +206,7 @@ export function createLessons({ show, backToHub, onEnter }) {
 
   function renderStats() {
     const n = L.lv.prompts.length;
-    $('#lbCount').textContent = `Customer ${Math.min(L.idx + 1, n)}/${n}`;
+    $('#lbCount').textContent = `Order ${Math.min(L.idx + 1, n)}/${n}`;
     $('#lbScore').textContent = `${L.score} pts`;
     $('#dots').innerHTML = L.lv.prompts
       .map(
@@ -366,13 +396,15 @@ export function createLessons({ show, backToHub, onEnter }) {
       SFX.bad();
       const comfort = pick(lv.comfort);
       setBubble(comfort);
+      // You get what you said: show what the hawker would actually hand over.
+      const served = canServe(lv, L.tokens);
       openModal(
         `<div class="fb-bad">
       <h2>Aiyo, not quite!</h2>
       <p class="npc-say"><b>${lv.npc}:</b> “${comfort}”</p>
-      <div class="compare"><div class="you"><small>You said</small><div class="said">“${phrase(L.tokens)}”</div></div>
-      <div class="right"><small>Say this instead</small><div class="said">“${phrase(p.a)}”</div></div></div>
-      <ul class="notes">${feedbackNotes(L.tokens, p.a, lv)
+      <div class="compare"><div class="you"><small>${served ? `You said this, so ${lv.honor} hands you` : `${lv.honor} can’t make that yet`}</small><div class="served">${artFor(lv, L.tokens)}</div><p class="got">${served ? infoFor(lv, L.tokens).cap : 'Something is missing from the order.'}</p><div class="said">“${phrase(L.tokens)}”</div></div>
+      <div class="right"><small>${wanted()}</small><div class="served">${artFor(lv, p.a)}</div><p class="got">${infoFor(lv, p.a).cap}</p><div class="said">“${phrase(p.a)}”</div></div></div>
+      <ul class="notes">${feedbackNotes(L.tokens, p.a, lv, friend()?.name)
         .map((n) => `<li>${n}</li>`)
         .join('')}</ul>
       <div class="row-btns"><button class="btn primary" data-act="retry" data-primary>Try again</button></div></div>`,
@@ -406,10 +438,11 @@ export function createLessons({ show, backToHub, onEnter }) {
       <h2 style="margin-top:.5em">Swee! Order coming right up!</h2>
       <p class="npc-say"><b>${lv.npc}:</b> “${pick(lv.praise)}”</p>
       <div class="said">“${phrase(p.a)}”</div>
-      <div class="breakdown">${p.a.map((t) => `<span class="bd" style="--cc:${catColor(t)}"><b>${t}</b> ${GLOSS[t].short.toLowerCase()}</span>`).join('')}</div>
+      <div class="breakdown">${p.a.map((t) => `<span class="bd" style="--cc:${catColor(t)}"><b>${t}</b><small>${GLOSS[t].short.toLowerCase()}</small></span>`).join('')}</div>
+      ${thanksHTML()}
       ${note}
       <div class="pts">+${pts} pts ${star ? '<span class="st">★ perfect</span>' : ''}</div>
-      <div class="row-btns"><button class="btn primary" data-act="next" data-primary>${isLast ? 'Finish lesson' : 'Next customer'}</button></div></div>`,
+      <div class="row-btns"><button class="btn primary" data-act="next" data-primary>${isLast ? 'Finish lesson' : 'Next order'}</button></div></div>`,
       { next: nextPrompt, close: nextPrompt },
     );
   }
@@ -417,7 +450,7 @@ export function createLessons({ show, backToHub, onEnter }) {
     closeModal();
     L.tokens = [];
     renderOrder();
-    setBubble('Try again. Listen to what they want.');
+    setBubble('Try again. Take your time.');
   }
   function nextPrompt() {
     closeModal();

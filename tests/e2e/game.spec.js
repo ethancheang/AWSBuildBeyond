@@ -33,25 +33,25 @@ test('3D hall renders, routes to a stall and opens the original lesson', async (
   });
   await page.locator('[data-li="0"]').click();
   await expect(
-    page.getByRole('button', { name: 'Start taking orders' }),
+    page.getByRole('button', { name: 'Join the queue' }),
   ).toBeVisible({ timeout: 20000 });
-  await page.getByRole('button', { name: 'Start taking orders' }).click();
+  await page.getByRole('button', { name: 'Join the queue' }).click();
   await choose(page, ['Kopi']);
   await expect(page.getByRole('dialog')).toContainText('+100 pts');
   expect(errors).toEqual([]);
 });
 
-test('all eighteen customers, Malay turns, graduation and progress survive reload', async ({
+test('all eighteen orders, Malay turns, graduation and progress survive reload', async ({
   page,
 }) => {
-  // This journey submits all 18 customers, including every Malay conversation
+  // This journey submits all 18 orders, including every Malay conversation
   // turn. Allow software-rendered CI browsers time to exercise the real UI.
   test.setTimeout(480_000);
   await enter(page);
   for (let i = 0; i < LEVELS.length; i++) {
     const level = LEVELS[i];
     await page.locator(`[data-li="${i}"]`).click();
-    await page.getByRole('button', { name: 'Start taking orders' }).click();
+    await page.getByRole('button', { name: 'Join the queue' }).click();
     for (let j = 0; j < level.prompts.length; j++) {
       const prompt = level.prompts[j];
       if (level.kind === 'nasi') {
@@ -65,7 +65,7 @@ test('all eighteen customers, Malay turns, graduation and progress survive reloa
         await expect(page.getByRole('dialog')).toContainText('+100 pts');
         await page
           .getByRole('button', {
-            name: j === 5 ? 'Finish lesson' : 'Next customer',
+            name: j === 5 ? 'Finish lesson' : 'Next order',
             exact: true,
           })
           .click();
@@ -103,7 +103,7 @@ test('retry, hint, undo, clearing chips, glossary and sound remain available', a
     page.getByRole('button', { name: 'Enable sound' }),
   ).toHaveAttribute('aria-pressed', 'false');
   await page.locator('[data-li="0"]').click();
-  await page.getByRole('button', { name: 'Start taking orders' }).click();
+  await page.getByRole('button', { name: 'Join the queue' }).click();
   await choose(page, ['Teh']);
   await expect(page.getByRole('dialog')).toContainText('Aiyo, not quite!');
   await page.getByRole('button', { name: 'Try again' }).click();
@@ -113,9 +113,7 @@ test('retry, hint, undo, clearing chips, glossary and sound remain available', a
   await page.getByRole('button', { name: 'Hint' }).click();
   await choose(page, ['Kopi']);
   await expect(page.getByRole('dialog')).toContainText('+40 pts');
-  await page
-    .getByRole('button', { name: 'Next customer', exact: true })
-    .click();
+  await page.getByRole('button', { name: 'Next order', exact: true }).click();
   await page.locator('#chips .chip[data-term="Teh"]').click();
   await page.getByRole('button', { name: 'Clear', exact: true }).click();
   await expect(page.locator('#orderBtn')).toBeDisabled();
@@ -141,7 +139,7 @@ test('mobile layout supports direct lessons with no horizontal overflow', async 
     fullPage: true,
   });
   await page.locator('[data-li="2"]').click();
-  await page.getByRole('button', { name: 'Start taking orders' }).click();
+  await page.getByRole('button', { name: 'Join the queue' }).click();
   await choose(page, ['Kak', 'Satu nasi lemak']);
   await expect(page.locator('#npcBubble')).toContainText('Sambal macam mana?');
   expect(
@@ -163,6 +161,6 @@ test('WebGL failure keeps every lesson accessible', async ({ page }) => {
   await expect(page.locator('#worldStatus')).toContainText('unavailable');
   await page.locator('[data-li="1"]').click();
   await expect(
-    page.getByRole('button', { name: 'Start taking orders' }),
+    page.getByRole('button', { name: 'Join the queue' }),
   ).toBeVisible();
 });

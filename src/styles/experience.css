@@ -645,6 +645,13 @@ body[data-screen='title'] #world {
   font-family: var(--font-b);
   font-weight: 600;
 }
+.chip span {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 0.85em;
+}
 .chip small,
 .slot small,
 .fslot > small,
@@ -654,6 +661,23 @@ body[data-screen='title'] #world {
 }
 .tok {
   border-width: 1px;
+}
+/* The category label is a solid colour band across the top of each chip. */
+.chip {
+  border-top-width: 1px;
+  overflow: hidden;
+  padding: 0 0 0.45em;
+  /* Buttons centre their content vertically; pin the band to the top instead. */
+  display: inline-flex;
+  flex-direction: column;
+  justify-content: flex-start;
+}
+.chip small {
+  margin: 0 0 0.3em;
+  padding: 0.2em 0.5em;
+  background: var(--cc);
+  color: #fff;
+  font-weight: 700;
 }
 .bubble,
 .phrase,

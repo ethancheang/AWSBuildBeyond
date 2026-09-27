@@ -39,7 +39,7 @@ test('clicking a stall while the world downloads waits for it safely', async ({
   await page.locator('[data-li="1"]').click();
   release();
   await expect(
-    page.getByRole('button', { name: 'Start taking orders' }),
+    page.getByRole('button', { name: 'Join the queue' }),
   ).toBeVisible({ timeout: 25000 });
   expect(errors).toEqual([]);
 });
@@ -69,7 +69,7 @@ test('context loss falls back to lessons without losing progress', async ({
   await expect(page.locator('#hubPts')).toHaveText('540 pts');
   await page.locator('[data-li="2"]').click();
   await expect(
-    page.getByRole('button', { name: 'Start taking orders' }),
+    page.getByRole('button', { name: 'Join the queue' }),
   ).toBeVisible();
 });
 
@@ -81,7 +81,7 @@ test('dark mode and reduced motion retain usable lesson controls', async ({
   await page.getByRole('button', { name: /Let's makan/ }).click();
   await page.getByLabel('Skip the walk').check();
   await page.locator('[data-li="0"]').click();
-  await page.getByRole('button', { name: 'Start taking orders' }).click();
+  await page.getByRole('button', { name: 'Join the queue' }).click();
   await page.locator('#chips .chip[data-term="Kopi"]').click();
   await page.getByRole('button', { name: 'Place order' }).click();
   await expect(page.getByRole('dialog')).toContainText('+100 pts');
@@ -91,14 +91,14 @@ test('dark mode and reduced motion retain usable lesson controls', async ({
   });
 });
 
-test('Malay retry retains earlier replies and scores once per customer', async ({
+test('Malay retry retains earlier replies and scores once per order', async ({
   page,
 }) => {
   await page.goto('/');
   await page.getByRole('button', { name: /Let's makan/ }).click();
   await page.getByLabel('Skip the walk').check();
   await page.locator('[data-li="2"]').click();
-  await page.getByRole('button', { name: 'Start taking orders' }).click();
+  await page.getByRole('button', { name: 'Join the queue' }).click();
   const reply = async (term) => {
     await page.locator(`#chips .chip[data-term="${term}"]`).click();
     await page.locator('#orderBtn').click();
