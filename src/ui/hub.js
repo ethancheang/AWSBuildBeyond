@@ -38,8 +38,7 @@ export function createHub({ openLesson }) {
             nearby = index;
             $('#talkBtn').hidden = index < 0;
             if (index >= 0)
-              $('#talkBtn').textContent =
-                `Talk to ${LEVELS[index].npc}  ·  E / Enter`;
+              $('#talkBtn').textContent = `Talk to ${LEVELS[index].npc}  ·  E`;
           },
           onUnavailable: fallback,
         });
@@ -77,9 +76,15 @@ export function createHub({ openLesson }) {
     $('#followViewBtn').setAttribute('aria-pressed', String(view === 'follow'));
     $('#isoViewBtn').setAttribute('aria-pressed', String(view === 'isometric'));
   }
-  $('#cameraBtn').addEventListener('click', () => setView('follow'));
-  $('#followViewBtn').addEventListener('click', () => setView('follow'));
-  $('#isoViewBtn').addEventListener('click', () => setView('isometric'));
+  // After a mouse click, hand the keyboard back to the game so Space jumps
+  // instead of pressing the button again. Keyboard activation keeps focus.
+  const viewButton = (view) => async (event) => {
+    await setView(view);
+    if (event.detail) $('#world canvas')?.focus({ preventScroll: true });
+  };
+  $('#cameraBtn').addEventListener('click', viewButton('follow'));
+  $('#followViewBtn').addEventListener('click', viewButton('follow'));
+  $('#isoViewBtn').addEventListener('click', viewButton('isometric'));
   function setPanel(open) {
     $('#hawkerPanel').hidden = !open;
     $('#hawkersToggle').setAttribute('aria-expanded', String(open));
