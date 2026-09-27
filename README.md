@@ -26,7 +26,7 @@ All three stalls are open from the start. Each has six orders: the first few are
 - Points, up to three stars per stall, replay, and a completion badge.
 - A lingo guide, hawker etiquette tips, optional sound, and locally saved progress.
 
-The game is single-player and uses guided, authored lessons. There is no microphone requirement, account, backend, live AI, or paid API dependency.
+Lessons use guided, authored content and remain single-player. The game works without an account, microphone, backend or paid API. Optional experimental **AWS AppSync Events** multiplayer lets visitors share the hall, see each other walk, sprint and jump, and see name tags fade during lessons. Lesson answers and progress never leave the browser. See [multiplayer setup and testing](docs/multiplayer.md).
 
 ## A hawker centre under one roof
 
@@ -92,6 +92,7 @@ src/
   audio/         Optional Web Audio feedback
   ui/            Hub, feedback, dialogs and formatting
   world/         Three.js scene, follow camera, instanced city, hall and navigation
+  net/           Optional AppSync/relay transports, validated messages and presence
   shared/        Small shared utilities
   styles/        Base lesson styles and the new experience design
   main.js        Application composition and screen transitions
@@ -124,7 +125,7 @@ npm run build
 npm run preview
 ```
 
-Deploy the generated `dist/` folder to a static host such as Amazon S3 with CloudFront. The relative asset base supports hosting under a subdirectory. There are no server credentials or environment variables to configure. The source HTML prototype is not included in the production build.
+Deploy the generated `dist/` folder to a static host such as Amazon S3 with CloudFront or AWS Amplify Hosting. The relative asset base supports hosting under a subdirectory. Single-player needs no environment configuration. For the experimental shared hall, configure the three AppSync values in [.env.example](.env.example) at build time and follow [the multiplayer guide](docs/multiplayer.md). The source HTML prototype is not included in the production build.
 
 ### Content and progress
 
@@ -134,7 +135,7 @@ Progress uses the original `hawker-lingo-v1` local-storage key and lesson IDs (`
 
 ## Inspiration and scope
 
-Inspired by [Kyoto Conversations / Komorebi](https://github.com/rpsouthall/hackathon-with-alan): learning a language by exploring a place and meeting local characters. This project adapts that idea to Singapore's hawker culture and retains the original Hawker Lingo prototype's lessons. Kyoto's multiplayer, proximity voice and live avatar services are not part of this implementation; no assets or service credentials from that repository are bundled here.
+Inspired by [Kyoto Conversations / Komorebi](https://github.com/rpsouthall/hackathon-with-alan): learning a language by exploring a place and meeting local characters. This project adapts that idea to Singapore's hawker culture and retains the original Hawker Lingo prototype's lessons. Experimental multiplayer uses our own AppSync Events integration; proximity voice and Kyoto's avatar services are outside the scope. No assets or service credentials from that repository are bundled here.
 
 Bundled Three.js, Permanent Marker and Outfit license notices are included in [`public/THIRD_PARTY_NOTICES.txt`](public/THIRD_PARTY_NOTICES.txt) and copied into production builds.
 

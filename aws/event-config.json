@@ -1,0 +1,6 @@
+{
+  "authProviders": [{ "authType": "API_KEY" }],
+  "connectionAuthModes": [{ "authType": "API_KEY" }],
+  "defaultPublishAuthModes": [{ "authType": "API_KEY" }],
+  "defaultSubscribeAuthModes": [{ "authType": "API_KEY" }]
+}
