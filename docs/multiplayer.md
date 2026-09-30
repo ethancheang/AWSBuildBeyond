@@ -22,6 +22,16 @@ The relay listens only on loopback by default. `HOST`, `PORT` and comma-separate
 
 ## Configure AWS AppSync Events
 
+### AWS Console (no CLI credentials required)
+
+1. Sign in to AWS and select **Asia Pacific (Singapore)**.
+2. In AppSync, choose **Create API → Event API** and name it `kopi-that-mp`. The console creates an API key with a short expiry by default.
+3. Open **Namespaces → Create namespace**, enter `game`, select **Code with no data source**, and replace the sample code with `aws/game-namespace-handlers.js`. Create the namespace.
+4. Under **Settings**, copy the HTTP and Realtime DNS endpoints and API key into the three corresponding `.env.local` variables shown below. Leave off `https://`, `wss://` and path suffixes.
+5. Check the key's expiration in Settings. Restart Vite and open two tabs with the same room name. The optional local relay can be stopped when using AppSync.
+
+### AWS CLI alternative
+
 Use an **Event API**, not a GraphQL API. The examples below use Singapore (`ap-southeast-1`), AWS CLI v2 and PowerShell, from the repository root. They are setup instructions, not commands that the app runs. An AWS account with permission to create AppSync resources is required.
 
 ```powershell
@@ -70,6 +80,18 @@ npm run test:multiplayer
 
 The dedicated multiplayer browser suite starts Vite on 5174 and an actual local relay on 8081, with AWS variables explicitly blank. It checks two browsers joining, movement and jump publication, presence through a lesson, tab departure, separate rooms and solo opt-out. Unit tests cover the AppSync wire protocol with a fake socket, malformed frames, authentication headers, reconnects, timeouts, backpressure, idle/busy timing, validation parity and avatar smoothing/fade/expiry/disposal. The relay test checks socket-bound identity, room isolation, origin rejection and departure.
 
-These checks do **not** prove connectivity or handler execution in AWS. Before enabling the hosted experiment, use a real Event API and two devices to verify subscription/publishing, reconnect after a network interruption, key expiry, the namespace handler's rejection of malformed messages, and lessons remaining local. AWS CLI setup, Amplify deployment and live AppSync validation require credentials and remain deployment checks.
+### Opt-in live AWS check
+
+With `.env.local` configured, run:
+
+```sh
+npm run test:appsync
+```
+
+This contacts your real Event API, so event and connection charges apply. It opens three short-lived sockets in unique test rooms and uses synthetic player data. It checks authentication and subscription, two-way state delivery (including jump and busy flags), server-side name truncation and removal of unknown fields, filtering of an invalid position, room isolation, and departure. It never prints the API key. A failed check exits with a nonzero status. This is deliberately separate from CI and the local test suites.
+
+On 30 September 2026, this live check passed against the Singapore Event API with the repository's namespace handler. Two Chrome game tabs also joined the same AWS room and displayed **Shared hall · 2 here** with the local relay stopped. Moving Player 1 changed its avatar's position in Player 2's view. Opening Player 1's lesson kept Player 2 in the hall with the remote name tag faded. The demo key created during setup expires on **7 October 2026 at 20:00 Singapore time**; obtain a replacement key and restart/rebuild before using the demo after that date. Keys and actual endpoint configuration stay in ignored `.env.local`.
+
+The CLI provisioning commands and Amplify deployment have not been executed. Before a hosted rollout, still verify on two separate devices, reconnect after a network interruption, and expired-key behavior. This live test does not exercise a real-time key-expiry transition.
 
 References: [AppSync WebSocket protocol](https://docs.aws.amazon.com/appsync/latest/eventapi/event-api-websocket-protocol.html), [event handlers](https://docs.aws.amazon.com/appsync/latest/eventapi/writing-event-handlers.html), [runtime features](https://docs.aws.amazon.com/appsync/latest/eventapi/runtime-supported-features.html), [create-api](https://docs.aws.amazon.com/cli/latest/reference/appsync/create-api.html), [create-channel-namespace](https://docs.aws.amazon.com/cli/latest/reference/appsync/create-channel-namespace.html), [Amplify build settings](https://docs.aws.amazon.com/amplify/latest/userguide/build-settings.html).
