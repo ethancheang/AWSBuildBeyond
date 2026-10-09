@@ -8,3 +8,7 @@ test-results/
 !.env.example
 *.local
 *.log
+
+# Launch videos from /brag: videos, posters, frames and stills
+brag-output/
+brag-output-*/
