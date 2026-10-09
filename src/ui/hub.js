@@ -4,10 +4,12 @@ import { artFor } from '../art/food.js';
 import { save, levelSave } from '../state/progress.ts';
 import { starsHTML } from './format.js';
 import { modalOpen, toast } from './overlays.js';
+import { createJoystick } from './joystick.js';
 import { PLACEHOLDER_STALLS, STALLS } from '../content/stalls.ts';
 
 export function createHub({ openLesson }) {
   let world,
+    joystick,
     loading,
     unavailable = false,
     nearby = -1;
@@ -18,6 +20,9 @@ export function createHub({ openLesson }) {
       'The 3D view is unavailable on this device. Choose any stall to keep learning.';
     $('#worldMode').textContent = 'Lesson mode';
     $('#talkBtn').hidden = true;
+    $('#joystick').hidden = true;
+    $('#helpBtn').hidden = true;
+    $('#helpPopup').hidden = true;
   }
   async function loadWorld() {
     if (loading) return loading;
@@ -41,10 +46,9 @@ export function createHub({ openLesson }) {
               $('#talkBtn').textContent = `Talk to ${LEVELS[index].npc}  ·  E`;
           },
           onUnavailable: fallback,
+          // Not shown on screen; announced to screen readers only.
           onMultiplayer: (status, count) => {
-            const badge = $('#multiplayerStatus');
-            badge.hidden = false;
-            badge.textContent =
+            $('#multiplayerStatus').textContent =
               status === 'connected'
                 ? `Shared hall · ${count + 1} here`
                 : status === 'connecting'
@@ -53,6 +57,10 @@ export function createHub({ openLesson }) {
           },
         });
         $('#worldStatus').hidden = true;
+        joystick ??= createJoystick($('#joystick'), (input) =>
+          world?.setStick(input),
+        );
+        if (!helpSeen()) setHelp(true);
         world.setCompleted(LEVELS.map((l) => levelSave(l.id).done));
       })
       .catch((error) => {
@@ -75,6 +83,39 @@ export function createHub({ openLesson }) {
     $('#world canvas')?.focus({ preventScroll: true });
     if (window.innerWidth <= 1000) setPanel(false);
   }
+  // The controls popup shows once per browser; the ? button brings it back.
+  const HELP_KEY = 'kopi-that-help-seen';
+  function helpSeen() {
+    try {
+      return localStorage.getItem(HELP_KEY) === '1';
+    } catch {
+      return false;
+    }
+  }
+  function setHelp(open) {
+    $('#helpPopup').hidden = !open;
+    $('#helpBtn').setAttribute('aria-expanded', String(open));
+    if (open) return;
+    try {
+      localStorage.setItem(HELP_KEY, '1');
+    } catch {
+      // Storage may be blocked; the popup simply shows again next visit.
+    }
+  }
+  $('#helpBtn').addEventListener('click', () =>
+    setHelp($('#helpPopup').hidden),
+  );
+  $('#closeHelp').addEventListener('click', (event) => {
+    setHelp(false);
+    // Hand the keyboard back to the game, as the camera buttons do.
+    if (event.detail) $('#world canvas')?.focus({ preventScroll: true });
+    else $('#helpBtn').focus();
+  });
+  window.addEventListener('keydown', (event) => {
+    if (event.key !== 'Escape' || $('#helpPopup').hidden || modalOpen) return;
+    setHelp(false);
+    if ($('#helpPopup').contains(document.activeElement)) $('#helpBtn').focus();
+  });
   $('#talkBtn').addEventListener('click', () => {
     if (nearby >= 0) openLesson(nearby);
   });
@@ -144,7 +185,10 @@ export function createHub({ openLesson }) {
   return {
     renderHub,
     loadWorld,
-    stop: () => world?.stop(),
+    stop: () => {
+      joystick?.release();
+      world?.stop();
+    },
     dispose: () => {
       observer.disconnect();
       world?.dispose();

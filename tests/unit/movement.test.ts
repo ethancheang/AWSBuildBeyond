@@ -6,6 +6,8 @@ import {
   RUN_SPEED,
   SPRINT_SPEED,
   stepMotion,
+  STICK_SPRINT,
+  stickInput,
 } from '../../src/world/movement';
 
 const idle = { x: 0, z: 0, sprint: false, jump: false };
@@ -48,5 +50,30 @@ describe('third-person character motion', () => {
       stepMotion(state, idle, 1 / 60);
     expect(state.grounded).toBe(true);
     expect(state.y).toBe(0);
+  });
+});
+
+describe('touch joystick', () => {
+  const R = 100;
+  it('ignores a resting thumb in the dead zone', () => {
+    expect(stickInput(0, 0, R)).toEqual({ x: 0, y: 0, sprint: false });
+    expect(stickInput(10, -5, R)).toEqual({ x: 0, y: 0, sprint: false });
+  });
+  it('walks faster the further the knob is pushed, up the screen is forward', () => {
+    const light = stickInput(0, -30, R),
+      firm = stickInput(0, -70, R);
+    expect(light.sprint).toBe(false);
+    expect(light.y).toBeGreaterThan(0);
+    expect(Math.abs(light.x)).toBeLessThan(1e-9);
+    expect(firm.y).toBeGreaterThan(light.y);
+    expect(firm.y).toBeLessThan(1);
+  });
+  it('sprints in the outer ring and past the rim', () => {
+    for (const reach of [STICK_SPRINT * R, R, 3 * R]) {
+      const input = stickInput(reach, 0, R);
+      expect(input.sprint).toBe(true);
+      expect(Math.hypot(input.x, input.y)).toBeCloseTo(1);
+    }
+    expect(stickInput(STICK_SPRINT * R - 1, 0, R).sprint).toBe(false);
   });
 });

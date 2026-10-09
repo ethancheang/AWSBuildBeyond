@@ -85,3 +85,35 @@ export function stepMotion(state: MotionState, input: MotionInput, dt: number) {
 
 export const horizontalSpeed = (state: MotionState) =>
   Math.hypot(state.vx, state.vz);
+
+/** A thumb inside this fraction of the joystick's radius does nothing. */
+export const STICK_DEADZONE = 0.15;
+/** Pushed past this fraction of the radius, towards the rim, the player sprints. */
+export const STICK_SPRINT = 0.85;
+
+export interface StickInput {
+  /** Screen-relative direction scaled by how hard to move: right and up are positive. */
+  x: number;
+  y: number;
+  sprint: boolean;
+}
+
+/**
+ * Turn a thumb's offset from the joystick centre (pixels, screen y down) into
+ * movement: speed grows with distance from the centre, and the outer ring sprints.
+ */
+export function stickInput(dx: number, dy: number, radius: number): StickInput {
+  const distance = Math.hypot(dx, dy);
+  const reach = Math.min(1, distance / radius);
+  if (reach < STICK_DEADZONE || !distance) return { x: 0, y: 0, sprint: false };
+  const sprint = reach >= STICK_SPRINT;
+  const strength = sprint
+    ? 1
+    : 0.35 +
+      (0.65 * (reach - STICK_DEADZONE)) / (STICK_SPRINT - STICK_DEADZONE);
+  return {
+    x: (dx / distance) * strength,
+    y: (-dy / distance) * strength,
+    sprint,
+  };
+}

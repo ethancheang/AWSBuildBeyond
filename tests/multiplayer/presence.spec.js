@@ -124,6 +124,6 @@ test('solo opt-out creates no multiplayer socket', async ({ page }) => {
   await page.goto('/?room=test&solo=1');
   await page.locator('#startBtn').click();
   await expect(page.locator('#worldStatus')).toBeHidden();
-  await expect(page.locator('#multiplayerStatus')).toBeHidden();
+  await expect(page.locator('#multiplayerStatus')).toHaveText('');
   expect(connections).toEqual([]);
 });
