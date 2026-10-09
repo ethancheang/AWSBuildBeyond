@@ -15,6 +15,7 @@ import {
   SPRINT_SPEED,
   stepMotion,
 } from './movement';
+import type { StickInput } from './movement';
 
 export interface WorldOptions {
   container: HTMLElement;
@@ -108,6 +109,8 @@ export function createWorld(options: WorldOptions) {
     elapsed = 0;
   let pointerStart = { x: 0, y: 0 };
   const motion = createMotion();
+  // The on-screen joystick for touch players; zero when released.
+  let stick: StickInput = { x: 0, y: 0, sprint: false };
   let jumpQueued = false,
     stride = 0;
   const makeTransport = transportFromEnv();
@@ -164,6 +167,7 @@ export function createWorld(options: WorldOptions) {
 
   function stop() {
     keys.clear();
+    stick = { x: 0, y: 0, sprint: false };
     jumpQueued = false;
     Object.assign(motion, { vx: 0, vz: 0, y: 0, vy: 0, grounded: true });
     route = [];
@@ -241,8 +245,8 @@ export function createWorld(options: WorldOptions) {
         }
         object = object.parent;
       }
-      if (hit.object === environment.floor)
-        navigate({ x: hit.point.x, z: hit.point.z });
+      // Clicking or tapping the floor does nothing: players walk with WASD or
+      // the joystick, so a stray tap never sends them off.
     },
     { signal },
   );
@@ -306,6 +310,7 @@ export function createWorld(options: WorldOptions) {
     render();
   });
   resize.observe(container);
+  const sprinting = () => keys.has('shift') || stick.sprint;
   const right = new THREE.Vector3(),
     forward = new THREE.Vector3();
   function frame(time: number) {
@@ -334,6 +339,20 @@ export function createWorld(options: WorldOptions) {
           .normalize();
         x = v.x;
         z = v.z;
+      } else if (stick.x || stick.y) {
+        // Unlike the keys, keep the stick's length: a light push walks slowly.
+        route = [];
+        arrival = undefined;
+        rig.camera.getWorldDirection(forward);
+        forward.y = 0;
+        forward.normalize();
+        right.crossVectors(forward, rig.camera.up).normalize();
+        const v = right
+          .clone()
+          .multiplyScalar(stick.x)
+          .addScaledVector(forward, stick.y);
+        x = v.x;
+        z = v.z;
       } else if (route.length) {
         const next = route[0],
           distance = Math.hypot(next.x - position.x, next.z - position.z);
@@ -358,7 +377,7 @@ export function createWorld(options: WorldOptions) {
       }
       const { dx, dz } = stepMotion(
         motion,
-        { x, z, sprint: keys.has('shift'), jump: jumpQueued },
+        { x, z, sprint: sprinting(), jump: jumpQueued },
         dt,
       );
       jumpQueued = false;
@@ -407,7 +426,7 @@ export function createWorld(options: WorldOptions) {
     rig.update(dt, position, environment.cameraObstacles, {
       heading: motion.heading,
       speed: horizontalSpeed(motion),
-      sprinting: keys.has('shift'),
+      sprinting: sprinting(),
       height: motion.y,
     });
     remotes.update(dt, reducedMotion.matches, rig.camera);
@@ -467,5 +486,18 @@ export function createWorld(options: WorldOptions) {
     canvas.remove();
   }
   sync();
-  return { goToStall, stop, sync, resetCamera, setView, setCompleted, dispose };
+  /** Joystick input from the touch controls (see src/ui/joystick.js). */
+  function setStick(input: StickInput) {
+    stick = input;
+  }
+  return {
+    goToStall,
+    stop,
+    sync,
+    resetCamera,
+    setView,
+    setCompleted,
+    setStick,
+    dispose,
+  };
 }

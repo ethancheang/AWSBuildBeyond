@@ -11,6 +11,16 @@
       name="description"
       content="Explore a 3D Singapore hawker centre and learn to order kopi, fishball noodles and nasi lemak through playful, guided conversations."
     />
+    <meta name="theme-color" content="#d32f2f" />
+    <link rel="icon" href="icons/icon.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="icons/apple-touch-icon.png" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content="Kopi That!" />
+    <meta
+      name="apple-mobile-web-app-status-bar-style"
+      content="black-translucent"
+    />
   </head>
   <body>
     <div id="world" aria-label="Singapore hawker centre">
@@ -75,6 +85,14 @@
         >
           ↺
         </button>
+        <button
+          id="helpBtn"
+          class="icon-btn"
+          aria-label="How to play"
+          aria-controls="helpPopup"
+        >
+          ?
+        </button>
       </div>
       <button
         id="hawkersToggle"
@@ -121,19 +139,33 @@
         </div>
       </aside>
       <button id="talkBtn" class="talk-btn" hidden></button>
-      <footer class="map-help" id="worldHelp">
-        <span id="multiplayerStatus" class="pill" role="status" hidden></span>
-        <span><kbd>WASD</kbd> Run</span
-        ><span class="hide-sm"><kbd>Shift</kbd> Sprint</span
-        ><span class="hide-sm"><kbd>Space</kbd> Jump</span
-        ><span><kbd>E</kbd> Talk</span
-        ><span class="hide-sm"
-          >Click to walk · Drag to look (right-drag in isometric) · Scroll to
-          zoom</span
-        ><span class="touch-help"
-          >Tap to walk · Drag to look · Pinch to zoom</span
-        >
-      </footer>
+      <div class="joystick" id="joystick" aria-hidden="true">
+        <div class="joystick-knob"></div>
+      </div>
+      <span id="multiplayerStatus" class="visually-hidden" role="status"></span>
+      <div
+        class="help-popup"
+        id="helpPopup"
+        role="dialog"
+        aria-labelledby="helpTitle"
+        hidden
+      >
+        <h2 id="helpTitle">How to play</h2>
+        <ul class="key-help" id="worldHelp">
+          <li><kbd>WASD</kbd> Run</li>
+          <li><kbd>Shift</kbd> Sprint</li>
+          <li><kbd>Space</kbd> Jump</li>
+          <li><kbd>E</kbd> Talk to a hawker</li>
+          <li>Drag to look (right-drag in isometric) · Scroll to zoom</li>
+        </ul>
+        <ul class="touch-help">
+          <li>Joystick to move</li>
+          <li>Push it to the edge to sprint</li>
+          <li>Drag to look · Pinch to zoom</li>
+          <li>Tap <b>Talk</b> near a hawker</li>
+        </ul>
+        <button class="btn primary" id="closeHelp">Let's go</button>
+      </div>
       <div class="venue-stamp" aria-hidden="true">
         ONE LITTLE RED DOT.<br /><b>A WORLD OF FLAVOUR.</b>
       </div>

@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!-- Kopi That! app icon: a kopi cup on the brand red. The artwork stays
+       inside the central 80% so it also works as a maskable icon. -->
+  <rect width="512" height="512" fill="#d32f2f"/>
+  <g fill="none" stroke="#fff8ee" stroke-width="16" stroke-linecap="round">
+    <path d="M206 118c-18 22 18 38 0 62M256 104c-20 26 20 44 0 76M306 118c-18 22 18 38 0 62"/>
+  </g>
+  <ellipse cx="256" cy="384" rx="150" ry="30" fill="#fff8ee"/>
+  <path d="M138 214h236c0 90-38 160-118 160s-118-70-118-160z" fill="#fff8ee"/>
+  <path d="M374 238c50 0 56 70 4 84" fill="none" stroke="#fff8ee" stroke-width="22" stroke-linecap="round"/>
+  <ellipse cx="256" cy="214" rx="118" ry="24" fill="#6b3f1f"/>
+  <path d="M152 262c40 16 168 16 208 0" fill="none" stroke="#d32f2f" stroke-width="10" stroke-linecap="round"/>
+</svg>

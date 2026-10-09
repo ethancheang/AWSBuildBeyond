@@ -63,20 +63,25 @@ Use the development server instead of opening `index.html` directly: browser mod
 
 ### Controls
 
-| Action                | Controls                                                                  |
-| --------------------- | ------------------------------------------------------------------------- |
-| Run                   | WASD / arrow keys, or click/tap a clear floor area                        |
-| Sprint / jump         | Hold Shift to sprint; Space to jump                                       |
-| Visit a stall         | Click its counter or choose its lesson card; your avatar walks there      |
-| Talk nearby           | E, or the on-screen talk button                                           |
-| Look around           | Drag the scene; scroll or pinch to zoom                                   |
-| Isometric view        | Isometric button; right-drag to rotate, scroll or pinch to zoom           |
-| Reset camera          | Reset follow camera button                                                |
-| Learn without walking | Select “Skip the walk, start lessons directly”                            |
-| Place an order        | Click phrase chips, then Place order; Enter also submits outside a button |
-| Undo / close a dialog | Backspace / Escape                                                        |
+| Action                | Controls                                                                       |
+| --------------------- | ------------------------------------------------------------------------------ |
+| Run                   | WASD / arrow keys; on touch screens, the on-screen joystick                    |
+| Sprint / jump         | Hold Shift, or push the joystick into its outer ring, to sprint; Space to jump |
+| Visit a stall         | Click its counter or choose its lesson card; your avatar walks there           |
+| Talk nearby           | E, or the on-screen talk button                                                |
+| Look around           | Drag the scene; scroll or pinch to zoom                                        |
+| Isometric view        | Isometric button; right-drag to rotate, scroll or pinch to zoom                |
+| Reset camera          | Reset follow camera button                                                     |
+| See the controls      | The ? button reopens the “How to play” popup shown on your first visit         |
+| Learn without walking | Select “Skip the walk, start lessons directly”                                 |
+| Place an order        | Click phrase chips, then Place order; Enter also submits outside a button      |
+| Undo / close a dialog | Backspace / Escape                                                             |
 
 A browser with WebGL 2 is needed for the 3D view. If it is unavailable or the graphics context is lost, the lesson list remains usable. Direct lessons also provide a keyboard-friendly route through every learning activity.
+
+### Install as an app
+
+Kopi That! is a Progressive Web App. On Android (Chrome), open the site and choose **Install app** (or ⋮ → _Add to Home screen_); on iPhone (Safari), choose Share → **Add to Home Screen**. Installed, it opens full screen with its own icon. The whole game is cached on first visit, so lessons and the 3D hall also work offline; the shared hall needs a connection. A new version is downloaded in the background and used from the next launch.
 
 ## Development
 
@@ -126,6 +131,8 @@ npm run preview
 ```
 
 Deploy the generated `dist/` folder to a static host such as Amazon S3 with CloudFront or AWS Amplify Hosting. The relative asset base supports hosting under a subdirectory. Single-player needs no environment configuration. For the experimental shared hall, configure the three AppSync values in [.env.example](.env.example) at build time and follow [the multiplayer guide](docs/multiplayer.md). The source HTML prototype is not included in the production build.
+
+The build also generates the app manifest and a Workbox service worker (`sw.js`) through `vite-plugin-pwa`; app icons live in `public/icons/`. The service worker only exists in production builds, so `npm run dev` and the tests run without it. Installation and offline play need HTTPS (or localhost), which Amplify Hosting and CloudFront provide.
 
 ### Content and progress
 
