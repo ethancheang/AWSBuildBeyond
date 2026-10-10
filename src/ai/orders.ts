@@ -13,7 +13,7 @@ const BRIEFS: Record<string, string> = {
     'Kopi/teh stall drinks only (coffee and tea with milk, sugar and ice options). No food, no alcohol.',
   noodles:
     'Fishball noodle stall only (noodle type, dry or soup, chili). No other dishes.',
-  nasi: 'Halal Malay hawker stall only: nasi lemak, mee rebus, mee soto or lontong, using the given vocabulary. Never mention pork, lard, alcohol or any non-halal food.',
+  nasi: "Halal Malay stall; never mention pork, lard or alcohol. Answer order: one meal term, then for 'Nasi lemak satu' only an optional 'Ayam goreng' and an optional egg term, then exactly one sambal term, then exactly one dining term. Mee rebus, mee soto and lontong never take chicken or egg terms. No greetings or thanks in the answer.",
 };
 
 function shuffle<T>(xs: readonly T[]): T[] {
@@ -45,36 +45,41 @@ function tokensOk(
   );
 }
 
-/** Rebuild AI stages from authored stages so q/chips always match the lesson's real flow. */
-function validStages(
-  lv: Lesson,
-  raw: unknown,
-  a: string[],
-  pool: Set<string>,
-): ConversationStage[] | null {
-  if (!Array.isArray(raw) || raw.length === 0) return null;
-  const authored = lv.prompts.flatMap((p) => p.stages ?? []);
-  const stages: ConversationStage[] = [];
-  for (const s of raw) {
-    if (!s || typeof s !== 'object') return null;
-    const sa = (s as { a?: unknown }).a;
-    if (!tokensOk(sa, pool, lv.slots.length)) return null;
-    const chips = (s as { chips?: unknown }).chips;
-    if (chips !== undefined && !tokensOk(chips, pool, pool.size)) return null;
-    const match = authored.find(
-      (st) =>
-        st.a.length === sa.length && sa.every((t) => st.chips.includes(t)),
-    );
-    if (!match) return null;
-    stages.push({ q: match.q, chips: match.chips.slice(), a: sa.slice() });
+/** Answers must follow the lesson's slot order (e.g. Kopi, milk, sugar, then ice), one per slot. */
+function slotOrderOk(lv: Lesson, a: string[]): boolean {
+  let last = -1;
+  for (const t of a) {
+    const cat = GLOSS[t]?.cat;
+    if (cat === 'polite') continue;
+    const i = lv.slots.indexOf(cat);
+    if (i <= last) return false;
+    last = i;
   }
-  const seq = stages.map((s) => s.q).join('\n');
-  const known = lv.prompts.some(
-    (p) => (p.stages ?? []).map((s) => s.q).join('\n') === seq,
-  );
-  if (!known) return null;
-  if (stages.flatMap((s) => s.a).join('\n') !== a.join('\n')) return null;
-  return stages;
+  return true;
+}
+
+const dishOf = (tokens: string[]) =>
+  tokens.map((t) => (t === 'Satu nasi lemak' ? 'Nasi lemak satu' : t))[0];
+
+/**
+ * Build the Malay conversation from the AI's answer using an authored flow for the
+ * same dish, so only nasi lemak asks about chicken and egg. The AI's own stages are ignored.
+ */
+function stagesFor(lv: Lesson, a: string[]): ConversationStage[] | null {
+  for (const p of lv.prompts) {
+    const flow = p.stages ?? [];
+    if (flow.reduce((n, st) => n + st.a.length, 0) !== a.length) continue;
+    if (dishOf(flow[0]?.a ?? []) !== dishOf(a)) continue;
+    let i = 0;
+    const stages = flow.map((st) => {
+      const part = a.slice(i, (i += st.a.length));
+      return part.every((t) => st.chips.includes(t))
+        ? { q: st.q, chips: st.chips.slice(), a: part }
+        : null;
+    });
+    if (stages.every(Boolean)) return stages as ConversationStage[];
+  }
+  return null;
 }
 
 export function validateOrder(lv: Lesson, raw: unknown): AiOrderPrompt | null {
@@ -90,9 +95,11 @@ export function validateOrder(lv: Lesson, raw: unknown): AiOrderPrompt | null {
   if (!q || q.length > MAX_Q || HARAM.test(q)) return null;
   const pool = chipPool(lv);
   if (!tokensOk(o.a, pool, lv.slots.length)) return null;
-  const order: AiOrderPrompt = { q, a: o.a.slice(), ai: true };
+  const a = o.a.filter((t) => GLOSS[t]?.cat !== 'polite');
+  if (!a.length || !slotOrderOk(lv, a)) return null;
+  const order: AiOrderPrompt = { q, a, ai: true };
   if (lv.id === 'nasi') {
-    const stages = validStages(lv, o.stages, order.a, pool);
+    const stages = stagesFor(lv, a);
     if (!stages) return null;
     order.stages = stages;
   }
@@ -164,6 +171,8 @@ async function fetchAiOrders(
 
 /** Shuffled authored prompts for one visit; repeats fresh shuffles if a lesson has fewer than `count`. */
 export function authoredOrders(lv: Lesson, count = 6): AiOrderPrompt[] {
+  // ?orders=all plays every authored order in its written order (used by browser tests).
+  if (fixedOrders()) return lv.prompts.slice();
   const authored: AiOrderPrompt[] = [];
   while (lv.prompts.length && authored.length < count)
     authored.push(...shuffle(lv.prompts));
@@ -171,12 +180,19 @@ export function authoredOrders(lv: Lesson, count = 6): AiOrderPrompt[] {
   return authored;
 }
 
+function fixedOrders(): boolean {
+  return (
+    typeof location !== 'undefined' &&
+    new URLSearchParams(location.search).get('orders') === 'all'
+  );
+}
+
 /** Valid AI cravings for this lesson, or none when unconfigured or on any failure. */
 export async function aiOrders(
   lv: Lesson,
   url = import.meta.env.VITE_AI_URL,
 ): Promise<AiOrderPrompt[]> {
-  return url ? fetchAiOrders(lv, url) : [];
+  return url && !fixedOrders() ? fetchAiOrders(lv, url) : [];
 }
 
 /** Orders for one visit: shuffled authored prompts, with valid AI cravings first when configured. */
