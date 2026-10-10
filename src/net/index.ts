@@ -11,9 +11,11 @@ export function transportFromEnv(): TransportFactory | null {
   const params = new URLSearchParams(location.search);
   if (params.get('solo') === '1') return null;
   // Channel segments: letters, digits and dashes only (AppSync channel rules).
+  // Lowercase so "Playtest" and "playtest" share one hall.
   const room =
     (params.get('room') ?? 'lobby')
-      .replace(/[^A-Za-z0-9-]/g, '')
+      .toLowerCase()
+      .replace(/[^a-z0-9-]/g, '')
       .slice(0, 40)
       .replace(/^-+|-+$/g, '') || 'lobby';
   const httpHost = env.VITE_APPSYNC_HTTP_HOST;

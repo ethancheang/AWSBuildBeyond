@@ -46,6 +46,7 @@ export function createHub({ openLesson }) {
               $('#talkBtn').textContent = `Talk to ${LEVELS[index].npc}  ·  E`;
           },
           onUnavailable: fallback,
+          playerName: () => $('#playerName').value,
           // Not shown on screen; announced to screen readers only.
           onMultiplayer: (status, count) => {
             $('#multiplayerStatus').textContent =
