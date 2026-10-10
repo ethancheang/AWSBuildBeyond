@@ -1,4 +1,4 @@
-// Run: ANTHROPIC_API_KEY=<key> ALLOWED_ORIGINS=http://127.0.0.1:5173 node aws/ai-orders/local-test.mjs
+// Run: OPENAI_API_KEY=<key> ALLOWED_ORIGINS=http://127.0.0.1:5173 node aws/ai-orders/local-test.mjs
 // Needs `npm install` in aws/ai-orders first.
 import { handler } from './index.mjs';
 

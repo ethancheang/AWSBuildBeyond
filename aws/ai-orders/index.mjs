@@ -1,9 +1,9 @@
 // Kopi That! AI craving orders. Lambda (Node.js 22, ESM) behind a Function URL.
-import Anthropic from '@anthropic-ai/sdk';
+import OpenAI from 'openai';
 
-// Reads ANTHROPIC_API_KEY from the Lambda environment.
-const client = new Anthropic();
-const MODEL_ID = process.env.MODEL_ID || 'claude-haiku-5-5';
+// Reads OPENAI_API_KEY from the Lambda environment.
+const client = new OpenAI();
+const MODEL_ID = process.env.MODEL_ID || 'gpt-5-mini';
 const ALLOWED = (process.env.ALLOWED_ORIGINS || '')
   .split(',')
   .map((s) => s.trim())
@@ -125,10 +125,17 @@ function systemPrompt(lessonId) {
 }
 
 function parseOrders(out) {
-  const content = out?.content || [];
-  const tool = content.find((c) => c.type === 'tool_use')?.input;
-  if (tool?.orders) return tool.orders;
-  const text = content.map((c) => (c.type === 'text' ? c.text : '')).join('');
+  const message = out?.choices?.[0]?.message;
+  const args = message?.tool_calls?.[0]?.function?.arguments;
+  if (args) {
+    try {
+      const tool = JSON.parse(args);
+      if (tool?.orders) return tool.orders;
+    } catch {
+      // Fall through to any JSON in the text reply.
+    }
+  }
+  const text = message?.content || '';
   const m = text.match(/\{[\s\S]*\}/);
   if (!m) return [];
   try {
@@ -181,8 +188,8 @@ export const handler = async (event) => {
   if (method === 'OPTIONS')
     return { statusCode: 204, headers: cors(origin), body: '' };
   if (method !== 'POST') return reply(405, { error: 'POST only' }, origin);
-  if (!process.env.ANTHROPIC_API_KEY)
-    return reply(500, { error: 'ANTHROPIC_API_KEY not set' }, origin);
+  if (!process.env.OPENAI_API_KEY)
+    return reply(500, { error: 'OPENAI_API_KEY not set' }, origin);
 
   let raw = event?.body || '';
   if (event?.isBase64Encoded) raw = Buffer.from(raw, 'base64').toString('utf8');
@@ -207,19 +214,27 @@ export const handler = async (event) => {
   });
 
   try {
-    const out = await client.messages.create({
+    const out = await client.chat.completions.create({
       model: MODEL_ID,
-      max_tokens: 2000,
-      system: systemPrompt(body.lessonId),
       messages: [
+        { role: 'system', content: systemPrompt(body.lessonId) },
         {
           role: 'user',
           content: `Write ${body.count} new order(s) for this request:
 ${user}`,
         },
       ],
-      tools: [ORDER_TOOL],
-      tool_choice: { type: 'tool', name: 'submit_orders' },
+      tools: [
+        {
+          type: 'function',
+          function: {
+            name: ORDER_TOOL.name,
+            description: ORDER_TOOL.description,
+            parameters: ORDER_TOOL.input_schema,
+          },
+        },
+      ],
+      tool_choice: { type: 'function', function: { name: ORDER_TOOL.name } },
     });
     const orders = cleanOrders(
       parseOrders(out),
@@ -229,7 +244,7 @@ ${user}`,
     );
     return reply(200, { orders }, origin);
   } catch (e) {
-    console.error('anthropic error', e?.status, e?.message);
+    console.error('openai error', e?.status, e?.message);
     return reply(502, { error: 'generation failed' }, origin);
   }
 };
