@@ -92,7 +92,29 @@ addEventListener('keydown', (e) => {
 addEventListener('scroll', hideTip, { passive: true });
 if (import.meta.hot) import.meta.hot.dispose(() => hub.dispose());
 
+// Time-limited playtest links: ?until=<unix seconds>. After that time the game
+// stops and says so. This is a courtesy limit, not access control.
+const until = Number(params.get('until'));
+function endPlaytest() {
+  hub.dispose();
+  closeModal();
+  document.body.dataset.screen = 'title';
+  $$('.screen').forEach((s) => s.classList.toggle('active', s.id === 'title'));
+  $('#title .title-card').innerHTML =
+    '<h1>Kopi That!</h1><p class="lede">This playtest has ended. Thanks for trying it!</p>';
+}
+const expired = () => until > 0 && Date.now() >= until * 1000;
 document.body.dataset.screen = 'title';
 $('#world').inert = true;
-hub.renderHub();
-hub.loadWorld();
+if (expired()) endPlaytest();
+else {
+  hub.renderHub();
+  hub.loadWorld();
+  if (until > 0) {
+    const timer = setInterval(() => {
+      if (!expired()) return;
+      clearInterval(timer);
+      endPlaytest();
+    }, 30_000);
+  }
+}
