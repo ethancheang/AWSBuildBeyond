@@ -3,7 +3,7 @@ import { GLOSS } from '../content/lessons';
 
 export type AiOrderPrompt = OrderPrompt & { ai?: true };
 
-const TIMEOUT_MS = 6000;
+const TIMEOUT_MS = 20000;
 const AI_COUNT = 2;
 const MAX_Q = 300;
 const HARAM = /\b(pork|lard|babi|bacon|ham|beer|wine|alcohol)\b/i;
@@ -162,18 +162,30 @@ async function fetchAiOrders(
   }
 }
 
+/** Shuffled authored prompts for one visit; repeats fresh shuffles if a lesson has fewer than `count`. */
+export function authoredOrders(lv: Lesson, count = 6): AiOrderPrompt[] {
+  const authored: AiOrderPrompt[] = [];
+  while (lv.prompts.length && authored.length < count)
+    authored.push(...shuffle(lv.prompts));
+  authored.length = Math.min(authored.length, Math.max(count, 0));
+  return authored;
+}
+
+/** Valid AI cravings for this lesson, or none when unconfigured or on any failure. */
+export async function aiOrders(
+  lv: Lesson,
+  url = import.meta.env.VITE_AI_URL,
+): Promise<AiOrderPrompt[]> {
+  return url ? fetchAiOrders(lv, url) : [];
+}
+
 /** Orders for one visit: shuffled authored prompts, with valid AI cravings first when configured. */
 export async function ordersFor(
   lv: Lesson,
   count = 6,
   url = import.meta.env.VITE_AI_URL,
 ): Promise<AiOrderPrompt[]> {
-  const authored: AiOrderPrompt[] = [];
-  // Repeat fresh shuffles if a lesson has fewer prompts than requested.
-  while (lv.prompts.length && authored.length < count)
-    authored.push(...shuffle(lv.prompts));
-  authored.length = Math.min(authored.length, Math.max(count, 0));
-  if (!url) return authored;
-  const ai = await fetchAiOrders(lv, url);
+  const authored = authoredOrders(lv, count);
+  const ai = await aiOrders(lv, url);
   return [...ai.slice(0, authored.length), ...authored.slice(ai.length)];
 }

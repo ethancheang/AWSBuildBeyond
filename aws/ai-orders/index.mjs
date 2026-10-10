@@ -4,6 +4,8 @@ import OpenAI from 'openai';
 // Reads OPENAI_API_KEY from the Lambda environment.
 const client = new OpenAI();
 const MODEL_ID = process.env.MODEL_ID || 'gpt-5-mini';
+// Short scenarios need little reasoning; set REASONING_EFFORT to empty for models without it.
+const REASONING_EFFORT = process.env.REASONING_EFFORT ?? 'minimal';
 const ALLOWED = (process.env.ALLOWED_ORIGINS || '')
   .split(',')
   .map((s) => s.trim())
@@ -216,6 +218,7 @@ export const handler = async (event) => {
   try {
     const out = await client.chat.completions.create({
       model: MODEL_ID,
+      ...(REASONING_EFFORT ? { reasoning_effort: REASONING_EFFORT } : {}),
       messages: [
         { role: 'system', content: systemPrompt(body.lessonId) },
         {

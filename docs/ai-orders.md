@@ -10,7 +10,7 @@ At [platform.openai.com](https://platform.openai.com), check your credit under *
 
 1. Lambda > **Create function** > Author from scratch, name `kopi-ai-orders`, runtime **Node.js 24.x** (22.x also works). Click **Create function**, then on the function page open the **Code** tab.
 2. In the **Code source** box, **Upload from > .zip file**: upload `kopi-that-ai-lambda.zip` (built from `aws/ai-orders` with `npm install` then zipping `index.mjs`, `package.json` and `node_modules`). Handler stays `index.handler`.
-3. Configuration > General: **Timeout 15 s**, memory 256 MB.
+3. Configuration > General: **Timeout 30 s**, memory 256 MB.
 4. Configuration > Environment variables:
 
 | Key               | Value                                                              |
