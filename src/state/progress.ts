@@ -33,7 +33,7 @@ export function parseProgress(raw: string | null): Progress {
       result.levels[level.id] = {
         done: record.done === true,
         stars: bounded(record.stars, 3),
-        best: bounded(record.best, level.prompts.length * 100),
+        best: bounded(record.best, 6 * 100),
       };
     }
   } catch {

@@ -22,6 +22,7 @@ import {
 } from '../ui/overlays.js';
 import { evaluate, nasiCheck } from '../domain/evaluation.ts';
 import { scoreOrder, lessonStars } from '../domain/scoring.ts';
+import { ordersFor } from '../ai/orders.ts';
 export function createLessons({ show, backToHub, onEnter }) {
   /** The player is always the customer; errands are ordered for a friend. */
   function friend() {
@@ -104,10 +105,18 @@ export function createLessons({ show, backToHub, onEnter }) {
   }
   let L = null;
 
-  function openLesson(li) {
-    if (modalOpen) return;
+  let opening = false;
+  async function openLesson(li) {
+    if (modalOpen || opening) return;
+    opening = true;
     onEnter();
-    const lv = LEVELS[li];
+    // Each visit plays 6 orders: AI cravings first when configured, then shuffled authored ones.
+    let lv;
+    try {
+      lv = { ...LEVELS[li], prompts: await ordersFor(LEVELS[li]) };
+    } finally {
+      opening = false;
+    }
     L = {
       li,
       lv,

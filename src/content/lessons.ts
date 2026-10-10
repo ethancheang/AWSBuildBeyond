@@ -27,6 +27,11 @@ const GLOSS: Record<string, Term> = {
     short: 'Tea',
     long: 'Strong black tea, "pulled" for froth. Said on its own, it comes with sweet condensed milk.',
   },
+  Milo: {
+    cat: 'base',
+    short: 'Milo chocolate malt drink',
+    long: 'The chocolate malt drink every kopi stall sells. Said on its own, it comes with condensed milk and sugar.',
+  },
   O: {
     cat: 'milk',
     short: 'No milk (still has sugar)',
@@ -137,7 +142,17 @@ const LEVELS: Lesson[] = [
       sugar: 'say nothing and you get normal sugar',
       ice: 'say nothing and it comes hot',
     },
-    chips: ['Kopi', 'Teh', 'O', 'C', 'Siew Dai', 'Kosong', 'Ga Dai', 'Peng'],
+    chips: [
+      'Kopi',
+      'Teh',
+      'Milo',
+      'O',
+      'C',
+      'Siew Dai',
+      'Kosong',
+      'Ga Dai',
+      'Peng',
+    ],
     intro: [
       'Eh, new face ah? Come, come. Uncle teach you order like a true-blue Singaporean.',
       'Got rhythm one: say the drink first, then milk, then sugar, then ice. Anything you don’t say, Uncle give you the default.',
@@ -184,6 +199,18 @@ const LEVELS: Lesson[] = [
       {
         q: 'Wah, 34 degrees outside. You want black coffee, no milk but with sugar, and iced.',
         a: ['Kopi', 'O', 'Peng'],
+      },
+      {
+        q: 'Long day ahead. You want a hot tea with evaporated milk, extra sweet.',
+        a: ['Teh', 'C', 'Ga Dai'],
+      },
+      {
+        q: 'Craving something chocolatey. You want an iced Milo, the usual way.',
+        a: ['Milo', 'Peng'],
+      },
+      {
+        q: 'You want a hot black coffee with no milk and no sugar at all.',
+        a: ['Kopi', 'O', 'Kosong'],
       },
       {
         friend: {
@@ -296,6 +323,18 @@ const LEVELS: Lesson[] = [
         a: ['Hor Fun', 'Soup', 'Chili'],
       },
       {
+        q: 'Light lunch. You want thin rice vermicelli in soup, no chili.',
+        a: ['Bee Hoon', 'Soup', 'No Chili'],
+      },
+      {
+        q: 'You want thin rice vermicelli tossed dry, with plenty of chili.',
+        a: ['Bee Hoon', 'Dry', 'Chili'],
+      },
+      {
+        q: 'You want thin yellow egg noodles, tossed dry, with chili.',
+        a: ['Mee Kia', 'Dry', 'Chili'],
+      },
+      {
         friend: {
           name: 'Rachel',
           tag: 'your friend, lunching with her four-year-old',
@@ -391,6 +430,24 @@ const MALAY_TERMS: [string, string, string, string][] = [
     'An alternative way to order one portion.',
   ],
   [
+    'Mee rebus satu',
+    'meal',
+    'One mee rebus',
+    'Yellow noodles in a thick, sweet potato and spice gravy, topped with egg, tauhu and lime. Rebus means boiled.',
+  ],
+  [
+    'Mee soto satu',
+    'meal',
+    'One mee soto',
+    'Yellow noodles in a spiced chicken broth with shredded chicken. Soto is a fragrant soup.',
+  ],
+  [
+    'Lontong satu',
+    'meal',
+    'One lontong',
+    'Compressed rice cakes in a mild coconut vegetable curry (sayur lodeh).',
+  ],
+  [
     'Ayam goreng',
     'chicken',
     'Fried chicken',
@@ -456,15 +513,18 @@ MALAY_TERMS.forEach(
 );
 const NASI_BASE =
   'This stall’s basic set: coconut rice, half a boiled egg, cucumber, peanuts and ikan bilis (anchovies). Sambal is chosen separately. Other stalls may serve different sets.';
-const nasiOrder = (chicken: boolean): ConversationStage => ({
+const nasiOrder = (dish: string, chicken: boolean): ConversationStage => ({
   q: 'Nak makan apa? — What would you like?',
-  a: ['Nasi lemak satu', ...(chicken ? ['Ayam goreng'] : [])],
+  a: [dish, ...(chicken ? ['Ayam goreng'] : [])],
   chips: [
     'Kak',
     'Saya nak',
     'Nasi lemak satu',
     'Satu nasi lemak',
     'Ayam goreng',
+    'Mee rebus satu',
+    'Mee soto satu',
+    'Lontong satu',
   ],
 });
 const nasiEgg = {
@@ -484,6 +544,8 @@ const nasiDining = (term: string): ConversationStage => ({
 });
 interface NasiScenario {
   q: string;
+  /** Meal chip; defaults to nasi lemak. Chicken and extra egg apply to nasi lemak only. */
+  dish?: string;
   friend?: Friend;
   chicken: boolean;
   egg: boolean;
@@ -509,6 +571,30 @@ const nasiScenarios: NasiScenario[] = [
     q: 'Very hungry today: one basic nasi lemak with one extra egg, regular sambal. Eat here.',
     chicken: false,
     egg: true,
+    sambal: 'Sambal biasa',
+    dining: 'Makan sini',
+  },
+  {
+    q: 'Something different today: one mee rebus, a little sambal on top. Eat here.',
+    dish: 'Mee rebus satu',
+    chicken: false,
+    egg: false,
+    sambal: 'Sambal sikit',
+    dining: 'Makan sini',
+  },
+  {
+    q: 'Feeling under the weather. One mee soto, no sambal, to take away.',
+    dish: 'Mee soto satu',
+    chicken: false,
+    egg: false,
+    sambal: 'Tak nak sambal',
+    dining: 'Bungkus',
+  },
+  {
+    q: 'Breakfast time. One lontong with regular sambal. Eat here.',
+    dish: 'Lontong satu',
+    chicken: false,
+    egg: false,
     sambal: 'Sambal biasa',
     dining: 'Makan sini',
   },
@@ -564,11 +650,11 @@ LEVELS.push({
   kind: 'nasi',
   stall: 'Dapur Aisyah',
   stallZh: 'NASI LEMAK',
-  type: 'Nasi lemak',
+  type: 'Malay hawker food',
   npc: 'Kak Aisyah',
-  role: 'nasi lemak hawker',
+  role: 'Malay hawker',
   honor: 'Kak',
-  title: 'A nasi lemak conversation',
+  title: 'A Malay hawker conversation',
   npcAv: {
     skin: '#bd895f',
     hair: '#33261e',
@@ -597,23 +683,33 @@ LEVELS.push({
   next: ['Welcome! What would you like?'],
   praise: ['Your meal is ready. Enjoy!'],
   comfort: ['No worries. Let’s try that part again.'],
-  prompts: nasiScenarios.map(({ q, friend, chicken, egg, sambal, dining }) => ({
-    friend,
-    q,
-    stages: [
-      nasiOrder(chicken),
-      ...(egg ? [nasiEgg] : []),
-      nasiSambal(sambal),
-      nasiDining(dining),
-    ],
-    a: [
-      'Nasi lemak satu',
-      ...(chicken ? ['Ayam goreng'] : []),
-      ...(egg ? ['Tambah telur satu'] : []),
+  prompts: nasiScenarios.map(
+    ({
+      q,
+      friend,
+      dish = 'Nasi lemak satu',
+      chicken,
+      egg,
       sambal,
       dining,
-    ],
-  })),
+    }) => ({
+      friend,
+      q,
+      stages: [
+        nasiOrder(dish, chicken),
+        ...(egg ? [nasiEgg] : []),
+        nasiSambal(sambal),
+        nasiDining(dining),
+      ],
+      a: [
+        dish,
+        ...(chicken ? ['Ayam goreng'] : []),
+        ...(egg ? ['Tambah telur satu'] : []),
+        sambal,
+        dining,
+      ],
+    }),
+  ),
 });
 
 const HUB_TIPS = [
