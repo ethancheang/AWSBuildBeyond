@@ -5,7 +5,7 @@ for (const width of [1440, 390]) {
     page,
   }) => {
     await page.setViewportSize({ width, height: 900 });
-    await page.goto('/');
+    await page.goto('/?orders=all');
     await expect(page).toHaveTitle(/Kopi That!/);
     await expect(page.locator('#title h1')).toHaveCSS(
       'font-family',

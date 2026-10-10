@@ -2,7 +2,7 @@ import { test, expect } from '@playwright/test';
 import { LEVELS } from '../../src/content/lessons.ts';
 
 async function enter(page, direct = true) {
-  await page.goto('/');
+  await page.goto('/?orders=all');
   await page.getByRole('button', { name: /Let's makan/ }).click();
   if (!(await page.locator('#hawkerPanel').isVisible()))
     await page.locator('#hawkersToggle').click();
@@ -41,10 +41,10 @@ test('3D hall renders, routes to a stall and opens the original lesson', async (
   expect(errors).toEqual([]);
 });
 
-test('all eighteen orders, Malay turns, graduation and progress survive reload', async ({
+test('every authored order, Malay turns, graduation and progress survive reload', async ({
   page,
 }) => {
-  // This journey submits all 18 orders, including every Malay conversation
+  // This journey submits every authored order (27), including every Malay conversation
   // turn. Allow software-rendered CI browsers time to exercise the real UI.
   test.setTimeout(480_000);
   await enter(page);
@@ -65,14 +65,15 @@ test('all eighteen orders, Malay turns, graduation and progress survive reload',
         await expect(page.getByRole('dialog')).toContainText('+100 pts');
         await page
           .getByRole('button', {
-            name: j === 5 ? 'Finish lesson' : 'Next order',
+            name:
+              j === level.prompts.length - 1 ? 'Finish lesson' : 'Next order',
             exact: true,
           })
           .click();
       }
     }
     await expect(page.getByRole('dialog')).toContainText(
-      '6/6 perfect first-try orders',
+      `${level.prompts.length}/${level.prompts.length} perfect first-try orders`,
     );
     await page.getByRole('button', { name: 'Back to the centre' }).click();
   }
@@ -138,6 +139,9 @@ test('mobile layout supports direct lessons with no horizontal overflow', async 
     path: 'test-results/hawker-centre-mobile.png',
     fullPage: true,
   });
+  // The first-visit controls popup overlays the stall list on a phone.
+  if (await page.locator('#helpPopup').isVisible())
+    await page.locator('#closeHelp').click();
   await page.locator('[data-li="2"]').click();
   await page.getByRole('button', { name: 'Join the queue' }).click();
   await choose(page, ['Kak', 'Satu nasi lemak']);

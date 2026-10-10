@@ -3,7 +3,7 @@ import { test, expect } from '@playwright/test';
 test('dialogs trap keyboard focus and restore it on Escape', async ({
   page,
 }) => {
-  await page.goto('/');
+  await page.goto('/?orders=all');
   await page.getByRole('button', { name: /Let's makan/ }).click();
   const guide = page.getByRole('button', { name: 'Lingo guide', exact: true });
   await guide.click();
@@ -34,7 +34,7 @@ test('clicking a stall while the world downloads waits for it safely', async ({
     await ready;
     await route.continue();
   });
-  await page.goto('/');
+  await page.goto('/?orders=all');
   await page.getByRole('button', { name: /Let's makan/ }).click();
   await page.locator('[data-li="1"]').click();
   release();
@@ -56,7 +56,7 @@ test('context loss falls back to lessons without losing progress', async ({
       }),
     ),
   );
-  await page.goto('/');
+  await page.goto('/?orders=all');
   await page.getByRole('button', { name: /Let's makan/ }).click();
   await expect(page.locator('#world canvas')).toBeVisible();
   await page
@@ -77,7 +77,7 @@ test('dark mode and reduced motion retain usable lesson controls', async ({
   page,
 }) => {
   await page.emulateMedia({ colorScheme: 'dark', reducedMotion: 'reduce' });
-  await page.goto('/');
+  await page.goto('/?orders=all');
   await page.getByRole('button', { name: /Let's makan/ }).click();
   await page.getByLabel('Skip the walk').check();
   await page.locator('[data-li="0"]').click();
@@ -94,7 +94,7 @@ test('dark mode and reduced motion retain usable lesson controls', async ({
 test('Malay retry retains earlier replies and scores once per order', async ({
   page,
 }) => {
-  await page.goto('/');
+  await page.goto('/?orders=all');
   await page.getByRole('button', { name: /Let's makan/ }).click();
   await page.getByLabel('Skip the walk').check();
   await page.locator('[data-li="2"]').click();
