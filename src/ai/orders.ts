@@ -1,5 +1,6 @@
 import type { ConversationStage, Lesson, OrderPrompt } from '../content/types';
 import { GLOSS } from '../content/lessons';
+import { infoFor } from '../art/food.js';
 
 export type AiOrderPrompt = OrderPrompt & { ai?: true };
 
@@ -91,13 +92,20 @@ export function validateOrder(lv: Lesson, raw: unknown): AiOrderPrompt | null {
     friend?: unknown;
   };
   if (typeof o.q !== 'string') return null;
-  const q = o.q.trim();
+  // Drop metadata the model sometimes echoes into the scenario, e.g. "(friend tag: @amir)".
+  const q = o.q.replace(/\s*\(friend tag:[^)]*\)/gi, '').trim();
   if (!q || q.length > MAX_Q || HARAM.test(q)) return null;
   const pool = chipPool(lv);
   if (!tokensOk(o.a, pool, lv.slots.length)) return null;
   const a = o.a.filter((t) => GLOSS[t]?.cat !== 'polite');
   if (!a.length || !slotOrderOk(lv, a)) return null;
-  const order: AiOrderPrompt = { q, a, ai: true };
+  // AI scenarios can be vague ("a strong iced coffee"), so spell out every choice
+  // the answer expects, using the same wording as the "You wanted" card.
+  const spec = String(infoFor(lv, a).cap)
+    .split(/, | · /)
+    .map((part, i) => (i ? part.toLowerCase() : part))
+    .join(', ');
+  const order: AiOrderPrompt = { q: `${q} Order: ${spec}.`, a, ai: true };
   if (lv.id === 'nasi') {
     const stages = stagesFor(lv, a);
     if (!stages) return null;
