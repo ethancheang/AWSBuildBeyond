@@ -95,6 +95,15 @@ describe('ordersFor', () => {
     expect(buildRequest(nasi).vocabulary.length).toBeGreaterThan(0);
   });
 
+  it('spells out every expected choice after a vague AI scenario', () => {
+    const o = validateOrder(drinks, {
+      q: 'You need a strong iced coffee to wake up.',
+      a: ['Kopi', 'C', 'Siew Dai', 'Peng'],
+    });
+    expect(o?.q).toMatch(/evaporated milk/i);
+    expect(o?.q).toMatch(/less sugar/i);
+  });
+
   it('rejects answers out of slot order', () => {
     expect(
       validateOrder(drinks, {
