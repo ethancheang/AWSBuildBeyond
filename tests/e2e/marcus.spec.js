@@ -16,19 +16,21 @@ async function enter(page, direct = false) {
 }
 const invite = (page) =>
   page.locator('#sheet').getByText('A tissue packet, a saved seat.');
-// Walk diagonally from the entrance towards Marcus's table.
-async function walkToTable(page) {
+// Walk diagonally from the entrance towards Marcus's table. Slow software-rendered
+// browsers cover less ground per second, so with `untilInvite` keep walking until
+// the introduction appears instead of stopping after a fixed time.
+async function walkToTable(page, { untilInvite = false } = {}) {
   if (await page.locator('#helpPopup').isVisible())
     await page.locator('#closeHelp').click();
   await page.locator('#world canvas').focus();
   await page.keyboard.down('w');
   await page.waitForTimeout(2000);
   await page.keyboard.down('a');
-  await page.waitForTimeout(1000);
+  if (untilInvite) await expect(invite(page)).toBeVisible({ timeout: 20_000 });
+  else await page.waitForTimeout(3000);
   await page.keyboard.up('w');
   await page.keyboard.up('a');
 }
-// Live replies use the AI Lambda; only Marcus requests are intercepted.
 async function routeMarcus(page, handler) {
   await page.route(
     (url) => !url.host.startsWith('127.0.0.1'),
@@ -89,8 +91,7 @@ test('walking near the table introduces Marcus once; no reintroduction after dis
   page,
 }) => {
   await enter(page);
-  await walkToTable(page);
-  await expect(invite(page)).toBeVisible({ timeout: 15_000 });
+  await walkToTable(page, { untilInvite: true });
   await page.getByRole('button', { name: 'Not now' }).click();
   await expect(page.locator('#modal')).toBeHidden();
 
