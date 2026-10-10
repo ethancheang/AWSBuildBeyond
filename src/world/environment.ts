@@ -82,8 +82,11 @@ export function buildEnvironment(scene: THREE.Scene) {
     ctx.strokeRect(12, 12, 1000, 232);
     ctx.textAlign = 'center';
     ctx.fillStyle = palette.cream;
-    ctx.font = '400 64px "Permanent Marker"';
-    ctx.fillText(text, 512, 115, 950);
+    // Without a subtitle, the title fills the sign so small tags stay legible.
+    ctx.font = subtitle
+      ? '400 64px "Permanent Marker"'
+      : '400 120px "Permanent Marker"';
+    ctx.fillText(text, 512, subtitle ? 115 : 170, 950);
     ctx.font = '500 28px Outfit';
     ctx.fillText(subtitle, 512, 184, 950);
     const texture = new THREE.CanvasTexture(canvas);

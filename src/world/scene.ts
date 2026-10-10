@@ -25,6 +25,7 @@ export interface WorldOptions {
   onTip: (text: string) => void;
   onUnavailable: () => void;
   onMultiplayer?: (status: ConnectionStatus, count: number) => void;
+  playerName?: () => string;
 }
 
 export function createWorld(options: WorldOptions) {
@@ -120,11 +121,11 @@ export function createWorld(options: WorldOptions) {
   function startMultiplayer() {
     if (session || !makeTransport || disposed) return;
     joined = true;
-    const params = new URLSearchParams(location.search);
     session = createSession({
       transport: makeTransport,
       name:
-        params.get('name') ?? `Guest ${100 + Math.floor(Math.random() * 900)}`,
+        options.playerName?.().trim() ||
+        `Guest ${100 + Math.floor(Math.random() * 900)}`,
       read: () => ({
         x: position.x,
         z: position.z,

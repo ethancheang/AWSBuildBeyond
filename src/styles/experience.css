@@ -612,6 +612,24 @@ body[data-screen='title'] #world {
   margin: 0 auto 22px;
   max-width: 44ch;
 }
+.player-name {
+  display: grid;
+  gap: 6px;
+  justify-items: center;
+  margin: 0 auto 18px;
+  color: var(--muted);
+}
+.player-name[hidden] {
+  display: none;
+}
+.player-name input {
+  width: min(240px, 100%);
+  padding: 10px 14px;
+  border: 1px solid currentColor;
+  border-radius: 12px;
+  font: inherit;
+  text-align: center;
+}
 #startBtn {
   padding: 13px 30px;
   border-radius: 12px;

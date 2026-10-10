@@ -4,7 +4,7 @@ The experiment is based on the current `main`, including sprint, jump and isomet
 
 Each browser publishes its own position, height, heading, display name and busy flag to `/game/<room>`. Other browsers interpolate a procedural avatar and a camera-facing name tag. Lessons, answers, scores and saved progress stay local. A busy player's tag fades while they use a lesson or dialog.
 
-No environment configuration means single-player with no socket connections. `?solo=1` opts out even on a configured build. Click **Let's makan** to join; the title screen does not join. Use the same `?room=test` on two devices, optionally with `&name=Alice`. Names are capped at 16 characters. Room names are case-sensitive, reduced to letters, digits and interior dashes, and capped at 40 characters; an empty name falls back to `lobby`. The footer shows connection status and the number of players visible to this client.
+No environment configuration means single-player with no socket connections. `?solo=1` opts out even on a configured build. Click **Let's makan** to join; the title screen does not join. Use the same `?room=test` on two devices. On multiplayer builds the title screen asks for a display name, prefilled from `&name=Alice` or the last name used in this browser; blank names become `Guest ###`. Names are capped at 16 characters. Room names are lowercased, reduced to letters, digits and interior dashes, and capped at 40 characters; an empty name falls back to `lobby`. The footer shows connection status and the number of players visible to this client.
 
 ## Run locally without AWS
 

@@ -56,7 +56,7 @@ export function createRemotePlayers(
       avatar.person.name = `remote-player:${state.id}`;
       avatar.person.position.set(state.x, state.y, state.z);
       avatar.person.rotation.y = state.h;
-      const tag = factory.label(state.name, '', '#37474F', 0.9, 0.28);
+      const tag = factory.label(state.name, '', '#37474F', 1.6, 0.4);
       (tag.material as THREE.MeshBasicMaterial).transparent = true;
       tag.position.set(0, 2.3, 0);
       avatar.person.add(tag);

@@ -35,7 +35,30 @@ const lessons = createLessons({
   onEnter: () => hub.stop(),
 });
 const hub = createHub({ openLesson: lessons.openLesson });
+// The shared hall only exists on builds with a multiplayer transport.
+const NAME_KEY = 'kopi-that-name';
+const params = new URLSearchParams(location.search);
+if (
+  params.get('solo') !== '1' &&
+  ((import.meta.env.VITE_APPSYNC_HTTP_HOST &&
+    import.meta.env.VITE_APPSYNC_REALTIME_HOST &&
+    import.meta.env.VITE_APPSYNC_API_KEY) ||
+    import.meta.env.VITE_WS_URL)
+) {
+  $('#playerNameField').hidden = false;
+  try {
+    $('#playerName').value =
+      params.get('name') ?? localStorage.getItem(NAME_KEY) ?? '';
+  } catch {
+    $('#playerName').value = params.get('name') ?? '';
+  }
+}
 $('#startBtn').addEventListener('click', () => {
+  try {
+    localStorage.setItem(NAME_KEY, $('#playerName').value.trim());
+  } catch {
+    // Storage may be blocked; the name still applies for this visit.
+  }
   beep([523, 784], 0.1);
   show('hub');
   hub.renderHub();
