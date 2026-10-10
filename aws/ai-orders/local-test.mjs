@@ -1,5 +1,5 @@
-// Run: MODEL_ID=<your Haiku inference profile ID> ALLOWED_ORIGINS=http://127.0.0.1:5173 node aws/ai-orders/local-test.mjs
-// Needs AWS credentials (env vars or ~/.aws) with bedrock:InvokeModel in ap-southeast-1.
+// Run: ANTHROPIC_API_KEY=<key> ALLOWED_ORIGINS=http://127.0.0.1:5173 node aws/ai-orders/local-test.mjs
+// Needs `npm install` in aws/ai-orders first.
 import { handler } from './index.mjs';
 
 const body = {

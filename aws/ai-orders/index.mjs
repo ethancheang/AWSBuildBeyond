@@ -1,13 +1,9 @@
 // Kopi That! AI craving orders. Lambda (Node.js 22, ESM) behind a Function URL.
-import {
-  BedrockRuntimeClient,
-  ConverseCommand,
-} from '@aws-sdk/client-bedrock-runtime';
+import Anthropic from '@anthropic-ai/sdk';
 
-const client = new BedrockRuntimeClient({
-  region: process.env.AWS_REGION || 'ap-southeast-1',
-});
-const MODEL_ID = process.env.MODEL_ID;
+// Reads ANTHROPIC_API_KEY from the Lambda environment.
+const client = new Anthropic();
+const MODEL_ID = process.env.MODEL_ID || 'claude-haiku-5-5';
 const ALLOWED = (process.env.ALLOWED_ORIGINS || '')
   .split(',')
   .map((s) => s.trim())
@@ -66,49 +62,44 @@ function validate(b) {
 }
 
 const ORDER_TOOL = {
-  toolSpec: {
-    name: 'submit_orders',
-    description: 'Return the generated hawker craving orders.',
-    inputSchema: {
-      json: {
-        type: 'object',
-        required: ['orders'],
-        properties: {
-          orders: {
-            type: 'array',
-            items: {
+  name: 'submit_orders',
+  description: 'Return the generated hawker craving orders.',
+  input_schema: {
+    type: 'object',
+    required: ['orders'],
+    properties: {
+      orders: {
+        type: 'array',
+        items: {
+          type: 'object',
+          required: ['q', 'a'],
+          properties: {
+            q: {
+              type: 'string',
+              description: 'Short warm second-person scenario, "You want..."',
+            },
+            a: {
+              type: 'array',
+              items: { type: 'string' },
+              description: 'Exact vocabulary terms in ordering order',
+            },
+            stages: {
+              type: 'array',
+              items: {
+                type: 'object',
+                required: ['q', 'a', 'chips'],
+                properties: {
+                  q: { type: 'string' },
+                  a: { type: 'array', items: { type: 'string' } },
+                  chips: { type: 'array', items: { type: 'string' } },
+                },
+              },
+            },
+            friend: {
               type: 'object',
-              required: ['q', 'a'],
               properties: {
-                q: {
-                  type: 'string',
-                  description:
-                    'Short warm second-person scenario, "You want..."',
-                },
-                a: {
-                  type: 'array',
-                  items: { type: 'string' },
-                  description: 'Exact vocabulary terms in ordering order',
-                },
-                stages: {
-                  type: 'array',
-                  items: {
-                    type: 'object',
-                    required: ['q', 'a', 'chips'],
-                    properties: {
-                      q: { type: 'string' },
-                      a: { type: 'array', items: { type: 'string' } },
-                      chips: { type: 'array', items: { type: 'string' } },
-                    },
-                  },
-                },
-                friend: {
-                  type: 'object',
-                  properties: {
-                    name: { type: 'string' },
-                    tag: { type: 'string' },
-                  },
-                },
+                name: { type: 'string' },
+                tag: { type: 'string' },
               },
             },
           },
@@ -134,10 +125,10 @@ function systemPrompt(lessonId) {
 }
 
 function parseOrders(out) {
-  const content = out?.output?.message?.content || [];
-  const tool = content.find((c) => c.toolUse)?.toolUse?.input;
+  const content = out?.content || [];
+  const tool = content.find((c) => c.type === 'tool_use')?.input;
   if (tool?.orders) return tool.orders;
-  const text = content.map((c) => c.text || '').join('');
+  const text = content.map((c) => (c.type === 'text' ? c.text : '')).join('');
   const m = text.match(/\{[\s\S]*\}/);
   if (!m) return [];
   try {
@@ -190,7 +181,8 @@ export const handler = async (event) => {
   if (method === 'OPTIONS')
     return { statusCode: 204, headers: cors(origin), body: '' };
   if (method !== 'POST') return reply(405, { error: 'POST only' }, origin);
-  if (!MODEL_ID) return reply(500, { error: 'MODEL_ID not set' }, origin);
+  if (!process.env.ANTHROPIC_API_KEY)
+    return reply(500, { error: 'ANTHROPIC_API_KEY not set' }, origin);
 
   let raw = event?.body || '';
   if (event?.isBase64Encoded) raw = Buffer.from(raw, 'base64').toString('utf8');
@@ -215,27 +207,20 @@ export const handler = async (event) => {
   });
 
   try {
-    const out = await client.send(
-      new ConverseCommand({
-        modelId: MODEL_ID,
-        system: [{ text: systemPrompt(body.lessonId) }],
-        messages: [
-          {
-            role: 'user',
-            content: [
-              {
-                text: `Write ${body.count} new order(s) for this request:\n${user}`,
-              },
-            ],
-          },
-        ],
-        inferenceConfig: { maxTokens: 800, temperature: 0.9 },
-        toolConfig: {
-          tools: [ORDER_TOOL],
-          toolChoice: { tool: { name: 'submit_orders' } },
+    const out = await client.messages.create({
+      model: MODEL_ID,
+      max_tokens: 2000,
+      system: systemPrompt(body.lessonId),
+      messages: [
+        {
+          role: 'user',
+          content: `Write ${body.count} new order(s) for this request:
+${user}`,
         },
-      }),
-    );
+      ],
+      tools: [ORDER_TOOL],
+      tool_choice: { type: 'tool', name: 'submit_orders' },
+    });
     const orders = cleanOrders(
       parseOrders(out),
       vocab,
@@ -244,7 +229,7 @@ export const handler = async (event) => {
     );
     return reply(200, { orders }, origin);
   } catch (e) {
-    console.error('bedrock error', e?.name, e?.message);
+    console.error('anthropic error', e?.status, e?.message);
     return reply(502, { error: 'generation failed' }, origin);
   }
 };

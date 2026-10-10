@@ -1,55 +1,32 @@
-# AI craving orders (Bedrock + Lambda Function URL)
+# AI craving orders (Anthropic API + Lambda Function URL)
 
-`aws/ai-orders/index.mjs` takes a POST with `{ lessonId, stall, count, brief, vocabulary, examples }` and returns `{ orders: [{ q, a, stages?, friend? }] }`. It calls the Bedrock Converse API with a forced tool call, then drops any order whose tokens are not in the given vocabulary or that mentions pork, lard or alcohol.
+`aws/ai-orders/index.mjs` takes a POST with `{ lessonId, stall, count, brief, vocabulary, examples }` and returns `{ orders: [{ q, a, stages?, friend? }] }`. It calls the Anthropic Messages API (Claude Haiku 5.5 by default) with a forced tool call, then drops any order whose tokens are not in the given vocabulary or that mentions pork, lard or alcohol. The game checks every order again and falls back to authored orders on any error.
 
-All steps use the AWS Console, region **Asia Pacific (Singapore) ap-southeast-1**.
+## 1. Get an Anthropic API key
 
-## 1. Enable the model in Bedrock
+At [console.anthropic.com](https://console.anthropic.com), add credit under **Billing**, set a monthly spend limit, then **API keys > Create key**. Copy it once; it is shown only at creation.
 
-1. Bedrock console > **Model access** > enable an Anthropic Claude Haiku model (fill in the Anthropic use-case form if asked).
-2. Bedrock > **Cross-region inference** (Inference profiles). Copy the ID of a Haiku profile that lists Singapore, preferably Claude Haiku 5.5 (an `apac.` profile, or `global.` if that is the only one offered); any Claude Haiku available in Singapore works. This is `MODEL_ID`.
+## 2. Create the Lambda (AWS Console, Asia Pacific (Singapore))
 
-## 2. Create the Lambda
-
-1. Lambda > **Create function** > Author from scratch, name `kopi-ai-orders`, runtime **Node.js 22.x**, arm64 is fine.
-2. In the code editor, rename `index.js` to `index.mjs`, paste `aws/ai-orders/index.mjs`, **Deploy**. Handler stays `index.handler`. No packages needed; the AWS SDK v3 is built into the runtime.
+1. Lambda > **Create function** > Author from scratch, name `kopi-ai-orders`, runtime **Node.js 22.x**.
+2. **Upload from > .zip file**: upload `kopi-that-ai-lambda.zip` (built from `aws/ai-orders` with `npm install` then zipping `index.mjs`, `package.json` and `node_modules`). Handler stays `index.handler`.
 3. Configuration > General: **Timeout 15 s**, memory 256 MB.
 4. Configuration > Environment variables:
 
-| Key               | Value                                                              |
-| ----------------- | ------------------------------------------------------------------ |
-| `MODEL_ID`        | the inference profile ID from step 1                               |
-| `ALLOWED_ORIGINS` | `https://main.d225gi8pmcmeb4.amplifyapp.com,http://127.0.0.1:5173` |
+| Key                 | Value                                                              |
+| ------------------- | ------------------------------------------------------------------ |
+| `ANTHROPIC_API_KEY` | your key from step 1                                               |
+| `ALLOWED_ORIGINS`   | `https://main.d225gi8pmcmeb4.amplifyapp.com,http://127.0.0.1:5173` |
+| `MODEL_ID`          | optional; defaults to `claude-haiku-5-5`                           |
 
-## 3. IAM permission
+No IAM changes are needed.
 
-Configuration > Permissions > click the execution role > **Add permissions > Create inline policy** (JSON):
+## 3. Function URL
 
-```json
-{
-  "Version": "2012-10-17",
-  "Statement": [
-    {
-      "Effect": "Allow",
-      "Action": ["bedrock:InvokeModel"],
-      "Resource": [
-        "arn:aws:bedrock:ap-southeast-1:<ACCOUNT_ID>:inference-profile/<MODEL_ID>",
-        "arn:aws:bedrock:*::foundation-model/anthropic.claude-*"
-      ]
-    }
-  ]
-}
-```
+1. Configuration > **Function URL** > Create, auth type **NONE**. Leave its CORS setting off; the code answers `OPTIONS` and sets `Access-Control-Allow-Origin` from `ALLOWED_ORIGINS`.
+2. **Cost risk:** anyone with the URL can spend your Anthropic credit; CORS does not stop curl. Set Configuration > Concurrency > **Reserved concurrency = 5** and keep the Anthropic spend limit low.
 
-An APAC inference profile routes to several APAC regions, so the foundation-model resource needs the `*` region. The Converse API is authorised by `bedrock:InvokeModel`.
-
-## 4. Function URL
-
-1. Configuration > **Function URL** > Create, auth type **NONE**.
-2. CORS: either leave it off (the code already answers `OPTIONS` and sets `Access-Control-Allow-Origin` from `ALLOWED_ORIGINS`), or turn it on with the same two origins, method `POST`, header `content-type`. If you turn it on, the Function URL handles CORS and the code headers are ignored for preflight; do not use both with different origin lists.
-3. **Cost risk:** auth NONE means anyone with the URL can call Bedrock on your bill. CORS does not stop curl. Cap it with Configuration > Concurrency > **Reserved concurrency = 5**, and set an AWS Budgets alert.
-
-## 5. Wire the game
+## 4. Wire the game
 
 Add to `.env.local` in the repo root, then rebuild (`npm run build`) and redeploy the Amplify zip:
 
@@ -59,10 +36,7 @@ VITE_AI_URL=https://<id>.lambda-url.ap-southeast-1.on.aws/
 
 ## Local test
 
-With AWS credentials that have the permission above:
-
 ```
-MODEL_ID=<your Haiku inference profile ID> node aws/ai-orders/local-test.mjs
+cd aws/ai-orders && npm install && cd ../..
+ANTHROPIC_API_KEY=<key> node aws/ai-orders/local-test.mjs
 ```
-
-This needs `@aws-sdk/client-bedrock-runtime` resolvable locally (`npm i -D @aws-sdk/client-bedrock-runtime` if it is not already installed). In the Lambda console you can instead use **Test** with an event whose `body` is the JSON string and `requestContext.http.method` is `POST`.
