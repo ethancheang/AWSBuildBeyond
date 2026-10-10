@@ -80,7 +80,7 @@ const GLOSS: Record<string, Term> = {
   'Bee Hoon': {
     cat: 'noodle',
     short: 'Thin rice vermicelli',
-    long: '米粉. Very thin white rice noodles. Nice, but none of these orders needs it.',
+    long: '米粉. Very thin white rice noodles.',
   },
   Dry: {
     cat: 'style',

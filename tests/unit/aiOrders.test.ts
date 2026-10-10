@@ -1,9 +1,15 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { ordersFor, validateOrder, buildRequest } from '../../src/ai/orders';
+import {
+  ordersFor,
+  validateOrder,
+  buildRequest,
+  wordingOk,
+} from '../../src/ai/orders';
 import { LEVELS } from '../../src/content/lessons';
 
 const drinks = LEVELS.find((l) => l.id === 'drinks')!;
 const nasi = LEVELS.find((l) => l.id === 'nasi')!;
+const noodles = LEVELS.find((l) => l.id === 'noodles')!;
 const URL = 'https://ai.example/orders';
 
 function mockFetch(body: unknown) {
@@ -97,7 +103,7 @@ describe('ordersFor', () => {
 
   it('spells out every expected choice after a vague AI scenario', () => {
     const o = validateOrder(drinks, {
-      q: 'You need a strong iced coffee to wake up.',
+      q: 'You need an iced coffee to wake up.',
       a: ['Kopi', 'C', 'Siew Dai', 'Peng'],
     });
     expect(o?.q).toMatch(/evaporated milk/i);
@@ -137,5 +143,111 @@ describe('ordersFor', () => {
     const out = await p;
     expect(out).toHaveLength(4);
     expect(out.every((o) => !o.ai)).toBe(true);
+  });
+});
+
+describe('wordingOk rejects scenarios that contradict the answer', () => {
+  it('accepts every authored prompt', () => {
+    for (const lv of LEVELS)
+      for (const p of lv.prompts) expect(wordingOk(lv, p.q, p.a)).toBe(true);
+  });
+  it('drinks: hot or iced', () => {
+    const iced = ['Kopi', 'Peng'];
+    expect(wordingOk(drinks, 'Something warming, iced', iced)).toBe(false);
+    expect(wordingOk(drinks, 'A hot coffee please', iced)).toBe(false);
+    expect(wordingOk(drinks, 'A hot day, so iced coffee', iced)).toBe(true);
+    expect(wordingOk(drinks, 'An iced coffee', ['Kopi'])).toBe(false);
+  });
+  it('drinks: sugar level', () => {
+    expect(wordingOk(drinks, 'Coffee, no sugar', ['Kopi', 'Siew Dai'])).toBe(
+      false,
+    );
+    expect(wordingOk(drinks, 'Coffee, less sugar', ['Kopi', 'Kosong'])).toBe(
+      false,
+    );
+    expect(wordingOk(drinks, 'Coffee, extra sweet', ['Kopi'])).toBe(false);
+    expect(wordingOk(drinks, 'Coffee, less sugar', ['Kopi', 'Ga Dai'])).toBe(
+      false,
+    );
+  });
+  it('drinks: milk, strength and the other drink', () => {
+    expect(wordingOk(drinks, 'Coffee, no milk', ['Kopi'])).toBe(false);
+    expect(wordingOk(drinks, 'Milky coffee', ['Kopi', 'O'])).toBe(false);
+    expect(wordingOk(drinks, 'Coffee, condensed milk', ['Kopi', 'C'])).toBe(
+      false,
+    );
+    expect(wordingOk(drinks, 'Coffee, evaporated milk', ['Kopi'])).toBe(false);
+    expect(wordingOk(drinks, 'A strong coffee', ['Kopi'])).toBe(false);
+    expect(wordingOk(drinks, 'A hot tea', ['Kopi'])).toBe(false);
+  });
+  it('noodles: dry or soup, chili, noodle type', () => {
+    const a = ['Mee Pok', 'Dry', 'Chili'];
+    expect(wordingOk(noodles, 'Mee pok in a bowl of soup', a)).toBe(false);
+    expect(wordingOk(noodles, 'Mee pok tossed, soup on the side', a)).toBe(
+      true,
+    );
+    expect(wordingOk(noodles, 'Mee pok tossed, hold the spice', a)).toBe(false);
+    expect(
+      wordingOk(noodles, 'Tossed dry, spicy', ['Mee Pok', 'Soup', 'Chili']),
+    ).toBe(false);
+    expect(
+      wordingOk(noodles, 'In soup, spicy', ['Mee Pok', 'Soup', 'No Chili']),
+    ).toBe(false);
+    expect(
+      wordingOk(noodles, 'Thin rice vermicelli, tossed dry, with chili', a),
+    ).toBe(false);
+  });
+  it('nasi: dining, sambal, egg, chicken and dish', () => {
+    const base = ['Nasi lemak satu', 'Sambal biasa', 'Makan sini'];
+    expect(wordingOk(nasi, 'Nasi lemak to take away', base)).toBe(false);
+    expect(
+      wordingOk(nasi, 'Nasi lemak, eat here', [
+        'Nasi lemak satu',
+        'Sambal biasa',
+        'Bungkus',
+      ]),
+    ).toBe(false);
+    expect(wordingOk(nasi, 'Nasi lemak, sambal on the side', base)).toBe(false);
+    expect(wordingOk(nasi, 'Nasi lemak, a little sambal', base)).toBe(false);
+    expect(wordingOk(nasi, 'Nasi lemak, no sambal', base)).toBe(false);
+    expect(wordingOk(nasi, 'Nasi lemak with an extra egg', base)).toBe(false);
+    expect(wordingOk(nasi, 'Nasi lemak, no extra egg', base)).toBe(true);
+    expect(
+      wordingOk(nasi, 'Mee rebus with a mild sambal, eat here', [
+        'Mee rebus satu',
+        'Sambal sikit',
+        'Makan sini',
+      ]),
+    ).toBe(false);
+    expect(wordingOk(nasi, 'Nasi lemak with fried chicken', base)).toBe(false);
+    expect(
+      wordingOk(nasi, 'Nasi lemak, eat here', [
+        'Nasi lemak satu',
+        'Ayam goreng',
+        'Sambal biasa',
+        'Makan sini',
+      ]),
+    ).toBe(false);
+    expect(
+      wordingOk(nasi, 'One mee rebus, eat here', [
+        'Lontong satu',
+        'Sambal biasa',
+        'Makan sini',
+      ]),
+    ).toBe(false);
+  });
+  it('rejects echoed metadata and hedges', () => {
+    expect(wordingOk(drinks, 'For Mei (tag: friend), a coffee', ['Kopi'])).toBe(
+      false,
+    );
+    expect(wordingOk(drinks, 'For Amir @amir, a coffee', ['Kopi'])).toBe(false);
+    expect(
+      wordingOk(nasi, 'Nasi lemak, maybe fried chicken, eat here', [
+        'Nasi lemak satu',
+        'Ayam goreng',
+        'Sambal biasa',
+        'Makan sini',
+      ]),
+    ).toBe(false);
   });
 });
