@@ -24,6 +24,9 @@ jobs:
       - run: npm run format:check
       - run: npx playwright install --with-deps chromium
       - run: npm run test:e2e
+        env:
+          # Enables Marcus's typed questions; browser tests mock this host.
+          VITE_AI_URL: https://ai.example.invalid/
       - run: npm ci --prefix server
       - run: npm run test:relay
       - run: npm run test:multiplayer

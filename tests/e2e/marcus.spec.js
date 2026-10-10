@@ -1,5 +1,8 @@
 import { test, expect } from '@playwright/test';
 
+// Walking to the table is slow on software-rendered CI browsers.
+test.describe.configure({ timeout: 180_000 });
+
 async function enter(page, direct = false) {
   await page.goto('/?orders=all');
   await expect(async () => {
