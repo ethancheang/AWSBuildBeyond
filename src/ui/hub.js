@@ -3,7 +3,8 @@ import { LEVELS, HUB_TIPS } from '../content/lessons.ts';
 import { artFor } from '../art/food.js';
 import { save, levelSave } from '../state/progress.ts';
 import { starsHTML } from './format.js';
-import { modalOpen, toast } from './overlays.js';
+import { closeModal, modalOpen, openModal, toast } from './overlays.js';
+import { createOfficeEncounter } from '../agents/controller.js';
 import { createJoystick } from './joystick.js';
 import { PLACEHOLDER_STALLS, STALLS } from '../content/stalls.ts';
 
@@ -13,6 +14,7 @@ export function createHub({ openLesson }) {
     loading,
     unavailable = false,
     nearby = -1;
+  const office = createOfficeEncounter({ openModal, closeModal });
   function fallback() {
     unavailable = true;
     $('#worldStatus').hidden = false;
@@ -47,6 +49,9 @@ export function createHub({ openLesson }) {
           },
           onUnavailable: fallback,
           playerName: () => $('#playerName').value,
+          onOfficeEncounter: office.offer,
+          canOfficeEncounter: office.canEncounter,
+          officeMet: office.met(),
           // Not shown on screen; announced to screen readers only.
           onMultiplayer: (status, count) => {
             $('#multiplayerStatus').textContent =
@@ -116,6 +121,17 @@ export function createHub({ openLesson }) {
     if (event.key !== 'Escape' || $('#helpPopup').hidden || modalOpen) return;
     setHelp(false);
     if ($('#helpPopup').contains(document.activeElement)) $('#helpBtn').focus();
+  });
+  // Without the 3D hall (or with walking skipped) Marcus is met directly.
+  $('#meetMarcus').addEventListener('click', async () => {
+    if (!$('#directLessons').checked && !unavailable) await loadWorld();
+    if ($('#directLessons').checked || unavailable) {
+      office.offer();
+      return;
+    }
+    world.goToOffice();
+    $('#world canvas')?.focus({ preventScroll: true });
+    if (window.innerWidth <= 1000) setPanel(false);
   });
   $('#talkBtn').addEventListener('click', () => {
     if (nearby >= 0) openLesson(nearby);
@@ -192,6 +208,7 @@ export function createHub({ openLesson }) {
     },
     dispose: () => {
       observer.disconnect();
+      office.dispose();
       world?.dispose();
     },
   };

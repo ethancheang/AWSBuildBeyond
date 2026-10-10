@@ -3,6 +3,12 @@ import { createCameraRig } from './camera';
 import type { CameraView } from './camera';
 import { buildEnvironment } from './environment';
 import { createRemotePlayers } from './remotePlayers';
+import {
+  createOfficeWorker,
+  MARCUS_APPROACH,
+  MARCUS_TABLE,
+  TRIGGER_RADIUS,
+} from './officeWorker';
 import { transportFromEnv } from '../net';
 import { createSession } from '../net/session';
 import type { ConnectionStatus } from '../net/protocol';
@@ -26,6 +32,12 @@ export interface WorldOptions {
   onUnavailable: () => void;
   onMultiplayer?: (status: ConnectionStatus, count: number) => void;
   playerName?: () => string;
+  /** Opens Marcus's invitation once he reaches his table. */
+  onOfficeEncounter?: () => void;
+  /** Whether an automatic introduction is still allowed. */
+  canOfficeEncounter?: () => boolean;
+  /** Marcus was met earlier this session: start him at his table. */
+  officeMet?: boolean;
 }
 
 export function createWorld(options: WorldOptions) {
@@ -80,6 +92,13 @@ export function createWorld(options: WorldOptions) {
   scene.add(sun);
   const environment = buildEnvironment(scene);
   const remotes = createRemotePlayers(scene, environment);
+  const office = createOfficeWorker(scene, environment, () =>
+    options.onOfficeEncounter?.(),
+  );
+  if (options.officeMet) office.restore();
+  environment.picks.push(...office.picks);
+  // Runtime latch: proximity starts Marcus's walk at most once per world.
+  let officeTriggered = !!options.officeMet;
   // Yaw first so the running lean tilts along the character's own forward axis.
   environment.player.person.rotation.order = 'YXZ';
   function render() {
@@ -184,6 +203,23 @@ export function createWorld(options: WorldOptions) {
     if (STALL_POSITIONS[index])
       navigate(STALL_POSITIONS[index], () => options.onStall(index));
   }
+  /** Walk to Marcus's table, then start or revisit the encounter. */
+  function goToOffice() {
+    officeTriggered = true;
+    navigate(MARCUS_APPROACH, () => office.start());
+  }
+  function checkOffice() {
+    if (
+      officeTriggered ||
+      route.length ||
+      !(options.canOfficeEncounter?.() ?? false) ||
+      Math.hypot(position.x - MARCUS_TABLE.x, position.z - MARCUS_TABLE.z) >=
+        TRIGGER_RADIUS
+    )
+      return;
+    officeTriggered = true;
+    office.start();
+  }
   function updateNearby() {
     const next = STALL_POSITIONS.findIndex(
       (p) => Math.hypot(p.x - position.x, p.z - position.z) < 1.9,
@@ -232,6 +268,10 @@ export function createWorld(options: WorldOptions) {
           return;
         }
         if (object.userData.kind === 'placeholder') return;
+        if (object.userData.kind === 'office-worker') {
+          goToOffice();
+          return;
+        }
         if (object.userData.kind === 'chope') {
           options.onTip(
             'Chope! A tissue packet means someone has reserved this seat.',
@@ -415,6 +455,7 @@ export function createWorld(options: WorldOptions) {
       player.leftArm.rotation.x = motion.grounded ? -swing * 0.9 : -0.9;
       player.rightArm.rotation.x = motion.grounded ? swing * 0.9 : -0.9;
       updateNearby();
+      checkOffice();
       if (!reducedMotion.matches) {
         environment.fans.forEach((fan) => (fan.rotation.y += dt * 2.5));
         environment.markers.forEach((marker, i) => {
@@ -431,6 +472,7 @@ export function createWorld(options: WorldOptions) {
       height: motion.y,
     });
     remotes.update(dt, reducedMotion.matches, rig.camera);
+    office.update(dt, rig.camera, options.isActive());
     render();
   }
   function sync() {
@@ -438,6 +480,7 @@ export function createWorld(options: WorldOptions) {
     const next = !document.hidden && options.isActive();
     if (!document.hidden && !disposed) {
       rig.update(0, position, environment.cameraObstacles);
+      office.update(0, rig.camera, false);
       render();
     }
     if (next === active || disposed) return;
@@ -493,6 +536,7 @@ export function createWorld(options: WorldOptions) {
   }
   return {
     goToStall,
+    goToOffice,
     stop,
     sync,
     resetCamera,
