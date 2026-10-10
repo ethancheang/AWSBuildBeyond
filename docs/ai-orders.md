@@ -7,7 +7,7 @@ All steps use the AWS Console, region **Asia Pacific (Singapore) ap-southeast-1*
 ## 1. Enable the model in Bedrock
 
 1. Bedrock console > **Model access** > enable an Anthropic Claude Haiku model (fill in the Anthropic use-case form if asked).
-2. Bedrock > **Cross-region inference** (Inference profiles). Copy the ID of a Haiku profile that lists Singapore, for example `apac.anthropic.claude-3-haiku-20240307-v1:0` or a newer `apac.anthropic.claude-...haiku...` one. This is `MODEL_ID`.
+2. Bedrock > **Cross-region inference** (Inference profiles). Copy the ID of a Haiku profile that lists Singapore, preferably Claude Haiku 5.5 (an `apac.` profile, or `global.` if that is the only one offered); any Claude Haiku available in Singapore works. This is `MODEL_ID`.
 
 ## 2. Create the Lambda
 
@@ -62,7 +62,7 @@ VITE_AI_URL=https://<id>.lambda-url.ap-southeast-1.on.aws/
 With AWS credentials that have the permission above:
 
 ```
-MODEL_ID=apac.anthropic.claude-3-haiku-20240307-v1:0 node aws/ai-orders/local-test.mjs
+MODEL_ID=<your Haiku inference profile ID> node aws/ai-orders/local-test.mjs
 ```
 
 This needs `@aws-sdk/client-bedrock-runtime` resolvable locally (`npm i -D @aws-sdk/client-bedrock-runtime` if it is not already installed). In the Lambda console you can instead use **Test** with an event whose `body` is the JSON string and `requestContext.http.method` is `POST`.

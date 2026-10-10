@@ -1,4 +1,4 @@
-// Run: MODEL_ID=apac.anthropic.claude-3-haiku-20240307-v1:0 ALLOWED_ORIGINS=http://127.0.0.1:5173 node aws/ai-orders/local-test.mjs
+// Run: MODEL_ID=<your Haiku inference profile ID> ALLOWED_ORIGINS=http://127.0.0.1:5173 node aws/ai-orders/local-test.mjs
 // Needs AWS credentials (env vars or ~/.aws) with bedrock:InvokeModel in ap-southeast-1.
 import { handler } from './index.mjs';
 
