@@ -76,27 +76,38 @@ describe('ordersFor', () => {
     ).toBeNull();
   });
 
-  it('requires valid stages for nasi and rebuilds them from authored stages', () => {
+  it('builds nasi stages from the authored flow for the same dish', () => {
     const src = nasi.prompts[0];
-    expect(validateOrder(nasi, { q: 'Basic set please', a: src.a })).toBeNull();
+    // AI stages are ignored; the conversation comes from the lesson's own flow.
     const ok = validateOrder(nasi, {
       q: 'Basic set please',
       a: src.a,
-      stages: src.stages!.map((s) => ({
-        q: 'made up',
-        a: s.a,
-        chips: s.chips,
-      })),
+      stages: [{ q: 'made up', a: ['Terima kasih'], chips: [] }],
     });
     expect(ok?.stages?.map((s) => s.q)).toEqual(src.stages!.map((s) => s.q));
+    // Egg questions belong to nasi lemak only.
     expect(
       validateOrder(nasi, {
-        q: 'Mismatch',
-        a: src.a,
-        stages: src.stages!.slice(1),
+        q: 'Lontong with egg',
+        a: ['Lontong satu', 'Tambah telur satu', 'Sambal biasa', 'Makan sini'],
       }),
     ).toBeNull();
     expect(buildRequest(nasi).vocabulary.length).toBeGreaterThan(0);
+  });
+
+  it('rejects answers out of slot order', () => {
+    expect(
+      validateOrder(drinks, {
+        q: 'Iced',
+        a: ['Kopi', 'O', 'Peng', 'Siew Dai'],
+      }),
+    ).toBeNull();
+    expect(
+      validateOrder(drinks, {
+        q: 'Iced',
+        a: ['Kopi', 'O', 'Siew Dai', 'Peng'],
+      }),
+    ).not.toBeNull();
   });
 
   it('falls back to authored prompts on timeout', async () => {
