@@ -100,12 +100,12 @@ export function createOfficeEncounter({
     openModal(
       `<p class="eyebrow">MARCUS · OFFICE WORKER</p>
       <h2>Lunch with Marcus</h2>
-      <p class="marcus-mode">${live ? 'Suggested questions have scripted answers. Typed questions get live AI replies, which can be wrong.' : 'Scripted preview: choose a question.'}</p>
+      <p class="marcus-mode">${live ? 'Pick a suggested question, or ask Marcus anything about hawker food, ordering or Singlish. Typed questions get live AI replies, which can be wrong.' : 'Scripted preview: choose a question.'}</p>
       <ol class="marcus-log" aria-live="polite">${enc.turns.map(turnHTML).join('')}${pending ? '<li class="marcus-turn assistant pending"><b>Marcus</b><p>Thinking…</p></li>' : ''}</ol>
       <div class="marcus-choices" role="group" aria-label="Suggested questions">${choices}</div>
       <form class="marcus-form" novalidate>
         <label for="marcusInput">${live ? 'Ask Marcus' : 'Typing is off in the scripted preview'}</label>
-        <div><input id="marcusInput" maxlength="${MAX_MESSAGE}" autocomplete="off" ${live && !pending ? '' : 'disabled'} value="${escapeHTML(draft)}" /><button class="btn" type="submit" data-act="send" ${live && !pending ? '' : 'disabled'}>Send</button></div>
+        <div><input id="marcusInput" placeholder="${live ? 'e.g. What does shiok mean?' : ''}" maxlength="${MAX_MESSAGE}" autocomplete="off" ${live && !pending ? '' : 'disabled'} value="${escapeHTML(draft)}" /><button class="btn" type="submit" data-act="send" ${live && !pending ? '' : 'disabled'}>Send</button></div>
       </form>
       <p class="marcus-error" role="alert">${escapeHTML(error)}</p>
       <div class="row-btns"><button class="btn ghost" data-act="close">Close</button><button class="btn primary" data-act="save" ${next < 0 && !pending ? 'data-primary' : ''}>Save to People I Met</button></div>`,
