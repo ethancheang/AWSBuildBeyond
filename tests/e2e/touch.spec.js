@@ -16,6 +16,9 @@ async function dismissHelp(page) {
   await page.waitForTimeout(800);
 }
 const view = (page) => page.locator('#world canvas').screenshot();
+// Each test loads the software-rendered 3D hall (the computer test twice),
+// which takes well over a minute on CI runners.
+test.describe.configure({ timeout: 180_000 });
 // A spot on the walkway in front of the player.
 async function tapFloor(page, tap) {
   const box = await page.locator('#world canvas').boundingBox();
