@@ -18,6 +18,8 @@ jobs:
           node-version: 24
           cache: npm
       - run: npm ci
+      # Unit tests import the AI Lambda, which has its own dependencies.
+      - run: npm ci --prefix aws/ai-orders
       - run: npm run check
       - run: npm run format:check
       - run: npx playwright install --with-deps chromium

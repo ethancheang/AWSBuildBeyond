@@ -4,7 +4,7 @@ import { LEVELS, GLOSS, CATS } from '../../src/content/lessons.ts';
 import { evaluate, nasiCheck } from '../../src/domain/evaluation.ts';
 
 describe('original lesson coverage', () => {
-  it('retains all three stalls and eighteen orders', () => {
+  it('retains all three stalls and twenty-seven orders', () => {
     expect(LEVELS.map((level) => level.id)).toEqual([
       'drinks',
       'noodles',

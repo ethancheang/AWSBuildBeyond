@@ -12,13 +12,13 @@ The setting is a stylised **Lau Pa Sat-inspired hall**, with Singapore's food cu
 
 ## Play the hawker trail
 
-| Stall                   | Your guide | What you practise                                                  |
-| ----------------------- | ---------- | ------------------------------------------------------------------ |
-| Heng Heng Kopi          | Uncle Lim  | Kopi and teh, milk choices, sweetness and ice                      |
-| Mei Mei Fishball Noodle | Auntie Mei | Noodle types, dry or soup, and chilli preferences                  |
-| Dapur Aisyah            | Kak Aisyah | A Malay conversation about nasi lemak, extras, sambal and takeaway |
+| Stall                   | Your guide | What you practise                                                                                |
+| ----------------------- | ---------- | ------------------------------------------------------------------------------------------------ |
+| Heng Heng Kopi          | Uncle Lim  | Kopi, teh and Milo, milk choices, sweetness and ice                                              |
+| Mei Mei Fishball Noodle | Auntie Mei | Noodle types, dry or soup, and chilli preferences                                                |
+| Dapur Aisyah            | Kak Aisyah | A Malay conversation about nasi lemak, mee rebus, mee soto, lontong, extras, sambal and takeaway |
 
-All three stalls are open from the start. Each has six orders: the first few are your own cravings, and the rest are errands for named friends. Lessons include:
+All three stalls are open from the start. Each has nine authored orders, your own cravings and errands for named friends, and every visit plays six of them in a random order, so the first craving changes each time. Lessons include:
 
 - Clickable phrase chips, hover/focus/long-press definitions, and live food illustrations.
 - Hints, undo, clear, retries, and explanations for incorrect choices or word order.
@@ -26,7 +26,15 @@ All three stalls are open from the start. Each has six orders: the first few are
 - Points, up to three stars per stall, replay, and a completion badge.
 - A lingo guide, hawker etiquette tips, optional sound, and locally saved progress.
 
-Lessons use guided, authored content and remain single-player. The game works without an account, microphone, backend or paid API. Optional experimental **AWS AppSync Events** multiplayer lets visitors share the hall, see each other walk, sprint and jump, and see name tags fade during lessons. Lesson answers and progress never leave the browser. See [multiplayer setup and testing](docs/multiplayer.md).
+Lessons are single-player and work without an account, microphone, backend or paid API.
+
+### AI cravings and Marcus
+
+With fixed orders, returning players memorise answers instead of learning the lingo. When `VITE_AI_URL` is configured, each stall visit asks an AWS Lambda (`aws/ai-orders`) to have an OpenAI model write two fresh cravings using only that stall's vocabulary. The AI writes scenarios only and never judges answers. The game rejects any AI order that uses words outside the stall's chips, breaks the ordering sequence, contradicts its own wording (for example "warm" with an iced answer) or mentions non-halal food, rebuilds Malay conversations from the dish's real flow, and appends the exact expected order in plain English. Lessons open immediately with authored orders; valid AI orders replace later orders when they arrive, and any failure leaves the authored orders in place. See [AI orders setup](docs/ai-orders.md).
+
+**Marcus**, an office worker on his lunch break, leaves a tissue packet on a table to _chope_ (reserve) his seat. Meet him from the **Lunch rush** card in the hawker panel, by clicking him or by walking near his table. Three suggested questions about chope, table sharing and courtesy always get authored answers. With `VITE_AI_URL` configured, players can also type questions about hawker food, ordering, Singlish and etiquette, which Marcus answers in character through the same Lambda; unrelated or sensitive questions are declined. **Save to People I Met** keeps learning notes and the transcript in a journal for the browser session.
+
+The title screen asks for a display name on multiplayer builds; room links ignore capitals. Optional experimental **AWS AppSync Events** multiplayer lets visitors share the hall, see each other walk, sprint and jump, and see name tags fade during lessons. Lesson answers and progress never leave the browser. See [multiplayer setup and testing](docs/multiplayer.md).
 
 ## A hawker centre under one roof
 
@@ -98,11 +106,13 @@ src/
   ui/            Hub, feedback, dialogs and formatting
   world/         Three.js scene, follow camera, instanced city, hall and navigation
   net/           Optional AppSync/relay transports, validated messages and presence
+  ai/            AI craving requests, validation and authored-order fallback
+  agents/        Marcus's dialogue, session memory and journal
   shared/        Small shared utilities
   styles/        Base lesson styles and the new experience design
   main.js        Application composition and screen transitions
 tests/
-  unit/          Content, evaluation, scoring, storage and navigation tests
+  unit/          Content, evaluation, scoring, storage, navigation, AI order and Marcus tests
   e2e/           Browser journeys, accessibility and fallback checks
 ```
 
@@ -113,13 +123,14 @@ City windows and foliage use instanced meshes to keep draw calls bounded. Geomet
 ### Checks
 
 ```sh
+npm ci --prefix aws/ai-orders   # Lambda dependencies used by unit tests
 npm run check          # ESLint, unit tests, TypeScript and production build
 npm run format:check   # Formatting
 npx playwright install chromium
 npm run test:e2e       # Browser tests; starts the local server when needed
 ```
 
-Browser tests run sequentially to avoid several software-rendered 3D contexts competing for the same machine. They include all 18 orders, the Malay conversation stages, saved progress, reset, hints/retries, mobile overlay layout, camera controls, placeholder separation, navigation and WebGL fallback.
+Browser tests run sequentially to avoid several software-rendered 3D contexts competing for the same machine. They play all 27 authored orders in written order (`?orders=all`, which also disables AI orders), the Malay conversation stages, saved progress, reset, hints/retries, mobile overlay layout, camera controls, placeholder separation, navigation and WebGL fallback.
 
 GitHub Actions runs these checks for pushes and pull requests.
 
@@ -130,7 +141,7 @@ npm run build
 npm run preview
 ```
 
-Deploy the generated `dist/` folder to a static host such as Amazon S3 with CloudFront or AWS Amplify Hosting. The relative asset base supports hosting under a subdirectory. Single-player needs no environment configuration. For the experimental shared hall, configure the three AppSync values in [.env.example](.env.example) at build time and follow [the multiplayer guide](docs/multiplayer.md). The source HTML prototype is not included in the production build.
+Deploy the generated `dist/` folder to a static host such as Amazon S3 with CloudFront or AWS Amplify Hosting. The relative asset base supports hosting under a subdirectory. Single-player needs no environment configuration. For the experimental shared hall, configure the three AppSync values in [.env.example](.env.example) at build time and follow [the multiplayer guide](docs/multiplayer.md). For AI cravings and Marcus's typed questions, deploy the Lambda in [the AI orders guide](docs/ai-orders.md) and set `VITE_AI_URL` at build time. The source HTML prototype is not included in the production build.
 
 The build also generates the app manifest and a Workbox service worker (`sw.js`) through `vite-plugin-pwa`; app icons live in `public/icons/`. The service worker only exists in production builds, so `npm run dev` and the tests run without it. Installation and offline play need HTTPS (or localhost), which Amplify Hosting and CloudFront provide.
 
