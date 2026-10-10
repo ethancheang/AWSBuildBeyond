@@ -22,7 +22,7 @@ import {
 } from '../ui/overlays.js';
 import { evaluate, nasiCheck } from '../domain/evaluation.ts';
 import { scoreOrder, lessonStars } from '../domain/scoring.ts';
-import { ordersFor } from '../ai/orders.ts';
+import { authoredOrders, aiOrders } from '../ai/orders.ts';
 export function createLessons({ show, backToHub, onEnter }) {
   /** The player is always the customer; errands are ordered for a friend. */
   function friend() {
@@ -105,18 +105,19 @@ export function createLessons({ show, backToHub, onEnter }) {
   }
   let L = null;
 
-  let opening = false;
-  async function openLesson(li) {
-    if (modalOpen || opening) return;
-    opening = true;
+  function openLesson(li) {
+    if (modalOpen) return;
     onEnter();
-    // Each visit plays 6 orders: AI cravings first when configured, then shuffled authored ones.
-    let lv;
-    try {
-      lv = { ...LEVELS[li], prompts: await ordersFor(LEVELS[li]) };
-    } finally {
-      opening = false;
-    }
+    // Each visit plays 6 shuffled orders. AI cravings, when configured, replace the
+    // orders after the current one as they arrive, so the lesson never waits on the network.
+    const lv = { ...LEVELS[li], prompts: authoredOrders(LEVELS[li]) };
+    aiOrders(LEVELS[li]).then((ai) => {
+      if (L?.lv !== lv) return;
+      const start = L.idx + 1;
+      ai.slice(0, lv.prompts.length - start).forEach((order, i) => {
+        lv.prompts[start + i] = order;
+      });
+    });
     L = {
       li,
       lv,

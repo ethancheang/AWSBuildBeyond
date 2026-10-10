@@ -113,7 +113,7 @@ describe('ordersFor', () => {
       ),
     );
     const p = ordersFor(drinks, 4, URL);
-    await vi.advanceTimersByTimeAsync(6000);
+    await vi.advanceTimersByTimeAsync(20000);
     const out = await p;
     expect(out).toHaveLength(4);
     expect(out.every((o) => !o.ai)).toBe(true);
