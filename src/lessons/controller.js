@@ -481,7 +481,8 @@ export function createLessons({ show, backToHub, onEnter }) {
     save.levels[lv.id] = {
       done: true,
       stars: Math.max(prev.stars, stars),
-      best: Math.max(prev.best, L.score),
+      // A visit plays 6 orders; match the cap applied when progress is loaded.
+      best: Math.min(Math.max(prev.best, L.score), 6 * 100),
     };
     persist();
     const allDone = LEVELS.every((l) => levelSave(l.id).done);
