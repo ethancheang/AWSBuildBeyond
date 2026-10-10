@@ -4,4 +4,5 @@ interface ImportMetaEnv {
   readonly VITE_APPSYNC_REALTIME_HOST?: string;
   readonly VITE_APPSYNC_API_KEY?: string;
   readonly VITE_WS_URL?: string;
+  readonly VITE_AI_URL?: string;
 }

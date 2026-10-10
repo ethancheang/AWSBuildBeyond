@@ -10,7 +10,7 @@ describe('original lesson coverage', () => {
       'noodles',
       'nasi',
     ]);
-    expect(LEVELS.map((level) => level.prompts.length)).toEqual([6, 6, 6]);
+    expect(LEVELS.map((level) => level.prompts.length)).toEqual([9, 9, 9]);
   });
   for (const level of LEVELS) {
     it(`${level.id}: every answer is available and has a glossary definition`, () => {

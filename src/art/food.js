@@ -1,6 +1,29 @@
 import { uid } from '../shared/dom.js';
 import { GLOSS } from '../content/lessons.ts';
+const MALAY_BOWLS = {
+  'Mee rebus satu': { soup: '#c9822f', top: '#f2c230' },
+  'Mee soto satu': { soup: '#e9c76a', top: '#f2d36b' },
+  'Lontong satu': { soup: '#f0c25a', top: '#fff8e2' },
+};
+function malayBowlSVG(tokens, dish) {
+  const { soup, top } = MALAY_BOWLS[dish],
+    packed = tokens.includes('Bungkus'),
+    sambal = tokens.some((t) =>
+      ['Sambal biasa', 'Sambal sikit', 'Sambal asing'].includes(t),
+    );
+  return `<svg viewBox="0 0 220 170" aria-hidden="true">
+ ${packed ? '<rect x="12" y="25" width="180" height="127" rx="10" fill="#c69b65" stroke="#322c22" stroke-width="3"/>' : ''}
+ <path d="M30 80Q34 150 110 150Q186 150 190 80Z" fill="#fbf7ee" stroke="#322c22" stroke-width="3"/>
+ <ellipse cx="110" cy="80" rx="80" ry="22" fill="${soup}" stroke="#322c22" stroke-width="3"/>
+ <g stroke="${top}" stroke-width="4" fill="none" stroke-linecap="round"><path d="M60 80q12 -8 24 0t24 0"/><path d="M100 86q12 -8 24 0t24 0"/></g>
+ <ellipse cx="80" cy="76" rx="12" ry="8" fill="#fff8df" stroke="#806b41"/><circle cx="80" cy="76" r="5" fill="#ffca36"/>
+ <g fill="#5aa84f"><circle cx="135" cy="72" r="4"/><circle cx="145" cy="78" r="4"/><circle cx="128" cy="82" r="3"/></g>
+ ${sambal ? '<ellipse cx="160" cy="86" rx="10" ry="6" fill="#b83123"/>' : ''}
+ </svg>`;
+}
 function nasiSVG(tokens) {
+  const dish = tokens.find((t) => MALAY_BOWLS[t]);
+  if (dish) return malayBowlSVG(tokens, dish);
   const has = (t) => tokens.includes(t),
     packed = has('Bungkus'),
     sep = has('Sambal asing');
@@ -20,7 +43,7 @@ function nasiSVG(tokens) {
 }
 function drinkParts(tokens) {
   return {
-    base: tokens.find((t) => t === 'Kopi' || t === 'Teh'),
+    base: tokens.find((t) => t === 'Kopi' || t === 'Teh' || t === 'Milo'),
     milk: tokens.find((t) => t === 'O' || t === 'C'),
     sugar: tokens.find(
       (t) => t === 'Siew Dai' || t === 'Kosong' || t === 'Ga Dai',
@@ -34,6 +57,7 @@ function drinkSVG(tokens) {
   const COL = {
     Kopi: { O: '#3a2214', C: '#8e5f39', _: '#a47248' },
     Teh: { O: '#a14d17', C: '#c8864f', _: '#d29a66' },
+    Milo: { O: '#5a3420', C: '#7a4a2e', _: '#8a5a38' },
   };
   const col = base ? COL[base][milk || '_'] : null;
   let s = '';
@@ -91,7 +115,7 @@ function drinkInfo(tokens) {
   const { base, milk, sugar, peng } = drinkParts(tokens);
   if (!base) return { cap: 'Start with the drink: Kopi or Teh', sweet: null };
   const parts = [
-    base === 'Kopi' ? 'Coffee' : 'Tea',
+    base === 'Kopi' ? 'Coffee' : base === 'Milo' ? 'Milo' : 'Tea',
     milk === 'O'
       ? 'no milk'
       : milk === 'C'
@@ -271,7 +295,7 @@ const infoFor = (lv, tokens) =>
           tokens
             .filter((t) => GLOSS[t] && GLOSS[t].cat !== 'polite')
             .map((t) => GLOSS[t].short)
-            .join(' · ') || 'Build your nasi lemak meal',
+            .join(' · ') || 'Build your Malay meal',
         sweet: null,
       }
     : lv.kind === 'drink'
