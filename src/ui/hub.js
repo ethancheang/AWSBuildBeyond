@@ -43,9 +43,10 @@ export function createHub({ openLesson }) {
           onTip: toast,
           onNearby: (index) => {
             nearby = index;
-            $('#talkBtn').hidden = index < 0;
-            if (index >= 0)
-              $('#talkBtn').textContent = `Talk to ${LEVELS[index].npc}  ·  E`;
+            $('#talkBtn').hidden = index === -1;
+            if (index !== -1)
+              $('#talkBtn').textContent =
+                `Talk to ${index >= 0 ? LEVELS[index].npc : 'Marcus'}  ·  E`;
           },
           onUnavailable: fallback,
           playerName: () => $('#playerName').value,
@@ -135,6 +136,8 @@ export function createHub({ openLesson }) {
   });
   $('#talkBtn').addEventListener('click', () => {
     if (nearby >= 0) openLesson(nearby);
+    // -2: standing beside Marcus (MARCUS_NEARBY in the world scene).
+    else if (nearby === -2) world?.talkToMarcus();
   });
   async function setView(view) {
     await loadWorld();

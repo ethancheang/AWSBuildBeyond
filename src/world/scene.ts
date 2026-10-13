@@ -27,6 +27,7 @@ export interface WorldOptions {
   container: HTMLElement;
   isActive: () => boolean;
   onStall: (index: number) => void;
+  /** Stall index in reach, MARCUS_NEARBY beside Marcus, or -1. */
   onNearby: (index: number) => void;
   onTip: (text: string) => void;
   onUnavailable: () => void;
@@ -39,6 +40,8 @@ export interface WorldOptions {
   /** Marcus was met earlier this session: start him at his table. */
   officeMet?: boolean;
 }
+
+export const MARCUS_NEARBY = -2;
 
 export function createWorld(options: WorldOptions) {
   const { container } = options;
@@ -221,9 +224,15 @@ export function createWorld(options: WorldOptions) {
     office.start();
   }
   function updateNearby() {
-    const next = STALL_POSITIONS.findIndex(
+    let next = STALL_POSITIONS.findIndex(
       (p) => Math.hypot(p.x - position.x, p.z - position.z) < 1.9,
     );
+    const marcus = office.position;
+    if (
+      next < 0 &&
+      Math.hypot(marcus.x - position.x, marcus.z - position.z) < 2.4
+    )
+      next = MARCUS_NEARBY;
     if (next !== nearby) {
       nearby = next;
       options.onNearby(next);
@@ -274,8 +283,9 @@ export function createWorld(options: WorldOptions) {
         }
         if (object.userData.kind === 'chope') {
           options.onTip(
-            'Chope! A tissue packet means someone has reserved this seat.',
+            'Chope! A tissue packet means someone has reserved this seat. Marcus is coming over to explain.',
           );
+          office.summon(position);
           return;
         }
         if (object.userData.kind === 'tray') {
@@ -310,6 +320,10 @@ export function createWorld(options: WorldOptions) {
       if (key === ' ' && !target.closest('button, a')) {
         event.preventDefault();
         if (!event.repeat) jumpQueued = true;
+      }
+      if (key === 'e' && nearby === MARCUS_NEARBY && !event.repeat) {
+        event.preventDefault();
+        office.talk();
       }
       if (key === 'e' && nearby >= 0 && !event.repeat) {
         event.preventDefault();
@@ -537,6 +551,7 @@ export function createWorld(options: WorldOptions) {
   return {
     goToStall,
     goToOffice,
+    talkToMarcus: () => office.talk(),
     stop,
     sync,
     resetCamera,

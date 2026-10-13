@@ -151,3 +151,16 @@ test('live replies are labelled and escaped; failures keep the conversation', as
   await page.getByRole('button', { name: 'Save to People I Met' }).click();
   await expect(dialog.locator('.marcus-notes li')).toHaveCount(2);
 });
+
+test('standing beside Marcus shows a Talk button that opens his chat', async ({
+  page,
+}) => {
+  await enter(page);
+  await walkToTable(page, { untilInvite: true });
+  await page.getByRole('button', { name: 'Not now' }).click();
+  // Marcus settles beside his table, next to where the player stopped.
+  const talk = page.locator('#talkBtn');
+  await expect(talk).toHaveText(/Talk to Marcus/, { timeout: 30_000 });
+  await talk.click();
+  await expect(invite(page)).toBeVisible();
+});

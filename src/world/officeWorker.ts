@@ -77,6 +77,8 @@ export function createOfficeWorker(
   let route: Point[] = [],
     walking = false,
     arrived = false,
+    // Set while Marcus walks over to a player who clicked a tissue packet.
+    summoned: Point | null = null,
     stride = 0;
   const inverse = new THREE.Quaternion();
 
@@ -111,6 +113,32 @@ export function createOfficeWorker(
     }
     walking = true;
   }
+  /** Walk over to stand beside the player, then open the conversation. */
+  function summon(player: Point) {
+    if (walking) return;
+    const dx = person.position.x - player.x,
+      dz = person.position.z - player.z,
+      d = Math.hypot(dx, dz);
+    if (d < 1.6) {
+      onArrival();
+      return;
+    }
+    const target = {
+      x: player.x + (dx / d) * 1.2,
+      z: player.z + (dz / d) * 1.2,
+    };
+    route = findPath({ x: person.position.x, z: person.position.z }, target);
+    if (!route.length) {
+      onArrival();
+      return;
+    }
+    summoned = player;
+    walking = true;
+  }
+  /** Talk where Marcus stands, unless he is still walking. */
+  function talk() {
+    if (!walking) onArrival();
+  }
   function restore() {
     route = [];
     settle();
@@ -141,7 +169,18 @@ export function createOfficeWorker(
       avatar.right.rotation.x = -swing;
       if (avatar.leftArm) avatar.leftArm.rotation.x = -swing * 0.9;
       if (avatar.rightArm) avatar.rightArm.rotation.x = swing * 0.9;
-      if (!route.length) {
+      if (!route.length && summoned) {
+        person.rotation.y = Math.atan2(
+          summoned.x - person.position.x,
+          summoned.z - person.position.z,
+        );
+        avatar.left.rotation.x = avatar.right.rotation.x = 0;
+        if (avatar.leftArm) avatar.leftArm.rotation.x = 0;
+        if (avatar.rightArm) avatar.rightArm.rotation.x = 0;
+        summoned = null;
+        walking = false;
+        onArrival();
+      } else if (!route.length) {
         settle();
         onArrival();
       }
@@ -153,7 +192,12 @@ export function createOfficeWorker(
   }
   return {
     start,
+    summon,
+    talk,
     restore,
+    get position(): Point {
+      return { x: person.position.x, z: person.position.z };
+    },
     update,
     picks: [person, tissue] as THREE.Object3D[],
     get arrived() {
