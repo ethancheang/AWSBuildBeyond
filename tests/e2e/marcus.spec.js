@@ -16,20 +16,17 @@ async function enter(page, direct = false) {
 }
 const invite = (page) =>
   page.locator('#sheet').getByText('A tissue packet, a saved seat.');
-// Walk diagonally from the entrance towards Marcus's table. Slow software-rendered
-// browsers cover less ground per second, so with `untilInvite` keep walking until
-// the introduction appears instead of stopping after a fixed time.
+// Walk straight ahead from the entrance. The path passes about 3 m from
+// Marcus's table, inside the trigger radius, so frame rate does not matter.
+// With `untilInvite`, stop as soon as the introduction appears.
 async function walkToTable(page, { untilInvite = false } = {}) {
   if (await page.locator('#helpPopup').isVisible())
     await page.locator('#closeHelp').click();
   await page.locator('#world canvas').focus();
   await page.keyboard.down('w');
-  await page.waitForTimeout(2000);
-  await page.keyboard.down('a');
-  if (untilInvite) await expect(invite(page)).toBeVisible({ timeout: 20_000 });
-  else await page.waitForTimeout(3000);
+  if (untilInvite) await expect(invite(page)).toBeVisible({ timeout: 30_000 });
+  else await page.waitForTimeout(5000);
   await page.keyboard.up('w');
-  await page.keyboard.up('a');
 }
 async function routeMarcus(page, handler) {
   await page.route(
@@ -156,11 +153,14 @@ test('standing beside Marcus shows a Talk button that opens his chat', async ({
   page,
 }) => {
   await enter(page);
-  await walkToTable(page, { untilInvite: true });
-  await page.getByRole('button', { name: 'Not now' }).click();
-  // Marcus settles beside his table, next to where the player stopped.
+  if (await page.locator('#helpPopup').isVisible())
+    await page.locator('#closeHelp').click();
+  await page.locator('#world canvas').focus();
+  // Marcus waits near the entrance, on the path straight ahead.
   const talk = page.locator('#talkBtn');
+  await page.keyboard.down('w');
   await expect(talk).toHaveText(/Talk to Marcus/, { timeout: 30_000 });
+  await page.keyboard.up('w');
   await talk.click();
   await expect(invite(page)).toBeVisible();
 });
