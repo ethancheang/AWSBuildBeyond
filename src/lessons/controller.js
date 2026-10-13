@@ -65,8 +65,10 @@ export function createLessons({ show, backToHub, onEnter }) {
       L.tries++;
       SFX.bad();
       const wrong = L.tokens.filter((t) => !['Kak', 'Saya nak'].includes(t));
+      const comfort = pick(L.lv.comfort);
+      setBubble(comfort);
       openModal(
-        `<h2>Let’s adjust that part</h2><p>You chose: ${wrong.length ? wrong.map((t) => `${tag(t)} — ${GLOSS[t].short}`).join('; ') : 'only a greeting'}.</p><p>${wanted()}: ${st.a.map((t) => `${tag(t)} — ${GLOSS[t].short}`).join('; ')}.</p><p>Your earlier replies are kept.</p><button class="btn primary" data-act="retry" data-primary>Try again</button>`,
+        `<div class="fb-bad"><h2>${L.lv.oops}</h2><p class="npc-say"><b>${L.lv.npc}:</b> “${comfort}”</p><p>You chose: ${wrong.length ? wrong.map((t) => `${tag(t)} — ${GLOSS[t].short}`).join('; ') : 'only a greeting'}.</p><p>${wanted()}: ${st.a.map((t) => `${tag(t)} — ${GLOSS[t].short}`).join('; ')}.</p><p>Your earlier replies are kept.</p><div class="row-btns"><button class="btn primary" data-act="retry" data-primary>Try again</button></div></div>`,
         {
           retry: () => {
             closeModal();
@@ -190,7 +192,9 @@ export function createLessons({ show, backToHub, onEnter }) {
     void cc.offsetWidth;
     cc.classList.add('enter');
     if (lv.kind === 'nasi') {
-      $('#custQuote').textContent += ' ' + NASI_BASE;
+      // The basic set describes nasi lemak only, not the soup or lontong dishes.
+      if (p.stages[0].a.includes('Nasi lemak satu'))
+        $('#custQuote').textContent += ' ' + NASI_BASE;
       renderStats();
       nasiTurn();
       return;
@@ -410,7 +414,7 @@ export function createLessons({ show, backToHub, onEnter }) {
       const served = canServe(lv, L.tokens);
       openModal(
         `<div class="fb-bad">
-      <h2>Aiyo, not quite!</h2>
+      <h2>${lv.oops}</h2>
       <p class="npc-say"><b>${lv.npc}:</b> “${comfort}”</p>
       <div class="compare"><div class="you"><small>${served ? `You said this, so ${lv.honor} hands you` : `${lv.honor} can’t make that yet`}</small><div class="served">${artFor(lv, L.tokens)}</div><p class="got">${served ? infoFor(lv, L.tokens).cap : 'Something is missing from the order.'}</p><div class="said">“${phrase(L.tokens)}”</div></div>
       <div class="right"><small>${wanted()}</small><div class="served">${artFor(lv, p.a)}</div><p class="got">${infoFor(lv, p.a).cap}</p><div class="said">“${phrase(p.a)}”</div></div></div>

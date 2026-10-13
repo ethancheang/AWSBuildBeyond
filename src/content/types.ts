@@ -60,6 +60,8 @@ export interface Lesson {
   orderNote?: string;
   next: string[];
   praise: string[];
+  /** Mistake heading in the hawker's own slang. */
+  oops: string;
   comfort: string[];
   prompts: OrderPrompt[];
 }

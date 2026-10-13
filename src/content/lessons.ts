@@ -182,6 +182,7 @@ const LEVELS: Lesson[] = [
       'Correct! Uncle pull kopi for you now.',
       'Power! You grew up here ah?',
     ],
+    oops: 'Aiyo, not quite!',
     comfort: [
       'No problem, everybody also like that at first.',
       'Relax, try again. Uncle not in a rush.',
@@ -308,6 +309,7 @@ const LEVELS: Lesson[] = [
       'Correct! Coming, coming.',
       'Wah, you learn fast!',
     ],
+    oops: 'Wah lau, bo tio leh!',
     comfort: [
       'Never mind, try again. Auntie patient one.',
       'Close already! Say it again slowly.',
@@ -682,7 +684,12 @@ LEVELS.push({
   },
   next: ['Welcome! What would you like?'],
   praise: ['Your meal is ready. Enjoy!'],
-  comfort: ['No worries. Let’s try that part again.'],
+  oops: 'Alamak, salah sikit!',
+  comfort: [
+    'Takpe, adik. Cuba lagi — never mind, try again.',
+    'Sikit lagi! Almost there.',
+    'Tak apa, slowly slowly. Kakak not in a hurry.',
+  ],
   prompts: nasiScenarios.map(
     ({
       q,
